@@ -118,7 +118,7 @@ create_group() {
     if getent group "${HOST_GID}" >/dev/null 2>&1; then
         return 0
     fi
-    if ! groupadd --gid "${HOST_GID}" "${HOST_USER}"; then
+    if ! groupadd --gid "${HOST_GID}" -K GID_MIN=100 -K GID_MAX=65534 "${HOST_USER}"; then
         log_error "Failed to create group '${HOST_USER}' with GID ${HOST_GID}."
         return 1
     fi
@@ -149,6 +149,7 @@ create_user() {
     else
         # No conflict — create fresh.
         if ! useradd --uid "${HOST_UID}" --gid "${HOST_GID}" \
+                -K UID_MIN=100 -K UID_MAX=65534 \
                 -m -s "${DEFAULT_SHELL}" "${HOST_USER}"; then
             log_error "Failed to create user '${HOST_USER}' (${HOST_UID}:${HOST_GID})."
             return 1
