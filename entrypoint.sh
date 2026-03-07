@@ -167,12 +167,13 @@ setup_home() {
         cp "${FALLBACK_HOME}/.zshrc" "${TARGET_HOME}/.zshrc"
     fi
 
-    # Symlink Alire configuration and toolchains from the build-time user.
-    # This avoids copying hundreds of MBs at every container start.
+    # Copy Alire config (small) — alr's GNAT filesystem API does not
+    # follow symlinks reliably, so a real directory is required.
     if [ -d "${FALLBACK_HOME}/.config/alire" ] && [ ! -e "${TARGET_HOME}/.config/alire" ]; then
         mkdir -p "${TARGET_HOME}/.config"
-        ln -s "${FALLBACK_HOME}/.config/alire" "${TARGET_HOME}/.config/alire"
+        cp -a "${FALLBACK_HOME}/.config/alire" "${TARGET_HOME}/.config/alire"
     fi
+    # Symlink Alire toolchains (large — hundreds of MB of compiler binaries).
     if [ -d "${FALLBACK_HOME}/.local/share/alire" ] && [ ! -e "${TARGET_HOME}/.local/share/alire" ]; then
         mkdir -p "${TARGET_HOME}/.local/share"
         ln -s "${FALLBACK_HOME}/.local/share/alire" "${TARGET_HOME}/.local/share/alire"
@@ -181,12 +182,9 @@ setup_home() {
     # Ensure expected directories exist.
     mkdir -p "${TARGET_HOME}/.local/bin"
 
-    # Chown the Alire directories so the target user can write to them.
-    # The symlinks point to the fallback user's home; the target user needs
-    # write access for alr to function (e.g., index updates, temp files).
-    if [ -d "${FALLBACK_HOME}/.config/alire" ]; then
-        chown -R "${HOST_UID}:${HOST_GID}" "${FALLBACK_HOME}/.config/alire" 2>/dev/null || true
-    fi
+    # Chown the Alire toolchains so the target user can write to them.
+    # The symlink points to the fallback user's home; the target user needs
+    # write access for alr to function.
     if [ -d "${FALLBACK_HOME}/.local/share/alire" ]; then
         chown -R "${HOST_UID}:${HOST_GID}" "${FALLBACK_HOME}/.local/share/alire" 2>/dev/null || true
     fi
