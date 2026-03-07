@@ -47,6 +47,13 @@ jobs:
             dev-container-ada:${{ matrix.name }}-gnat-${{ matrix.gnat_version }} \
             bash -c '
               set -e
+              echo "=== Diagnostics ==="
+              id
+              echo "HOME=$HOME"
+              ls -la "$HOME/.config/" 2>/dev/null || echo "No .config dir"
+              ls -la "$HOME/.config/alire" 2>/dev/null || echo "No alire config"
+              ls -la "$HOME/.local/share/alire" 2>/dev/null || echo "No alire share"
+              echo ""
               echo "=== Smoke test ==="
               alr version
               alr exec -- gprbuild --version

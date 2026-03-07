@@ -74,7 +74,7 @@ setopt SHARE_HISTORY
 export FPATH="$HOME/.docker/completions:$FPATH"
 
 autoload -Uz compinit
-compinit -d "$HOME/.zcompdump"
+compinit -u -d "$HOME/.zcompdump"
 
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
