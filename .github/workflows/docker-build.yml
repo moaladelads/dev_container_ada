@@ -55,7 +55,7 @@ jobs:
               echo "HOME=$HOME"
               echo ""
               echo "=== Compile test ==="
-              alr exec -- gprbuild -P hello_ada.gpr -j0
+              alr build
               bin/hello_ada
               echo "=== Smoke test passed ==="
             '
