@@ -181,6 +181,16 @@ setup_home() {
     # Ensure expected directories exist.
     mkdir -p "${TARGET_HOME}/.local/bin"
 
+    # Chown the Alire directories so the target user can write to them.
+    # The symlinks point to the fallback user's home; the target user needs
+    # write access for alr to function (e.g., index updates, temp files).
+    if [ -d "${FALLBACK_HOME}/.config/alire" ]; then
+        chown -R "${HOST_UID}:${HOST_GID}" "${FALLBACK_HOME}/.config/alire" 2>/dev/null || true
+    fi
+    if [ -d "${FALLBACK_HOME}/.local/share/alire" ]; then
+        chown -R "${HOST_UID}:${HOST_GID}" "${FALLBACK_HOME}/.local/share/alire" 2>/dev/null || true
+    fi
+
     # Non-fatal: some files may be on read-only mounts.
     if ! chown -R "${HOST_UID}:${HOST_GID}" "${TARGET_HOME}" 2>/dev/null; then
         log_warn "Could not chown all files in ${TARGET_HOME}."
