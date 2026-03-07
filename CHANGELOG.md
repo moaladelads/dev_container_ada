@@ -5,7 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-rc] - 2026-03-06
+## [1.0.0] - 2026-03-06
+
+### Changed
+
+- Promoted from 1.0.0-rc1 to stable release.
+
+### Fixed
+
+- Added `exports/` to `.dockerignore` to exclude temporary files from build
+  context.
+- Added `exports/` and `examples/` to repository layout in README and
+  USER_GUIDE.
+- Added `test`, `test-docker`, `test-podman` targets to CHANGELOG.
+- Added Alire crate version vs binary version note in USER_GUIDE §15.3.
+- Updated pre-release testing status in USER_GUIDE §16 to reflect verified
+  GitHub Actions workflows and Docker rootful testing.
+
+## [1.0.0-rc1] - 2026-03-06
 
 ### Added
 
@@ -30,8 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Container-aware Zsh prompt with git branch and runtime indicator.
 - `container_info` shell function for quick environment diagnostics.
 - Makefile with targets: `build`, `build-no-cache`, `run`, `run-root`,
-  `run-shell`, `inspect`, `save`, `show-tags`, `tag-gnat`, `tag-latest`,
-  `clean`, `compress`.
+  `run-shell`, `test`, `test-docker`, `test-podman`, `inspect`, `save`,
+  `show-tags`, `tag-gnat`, `tag-latest`, `clean`, `compress`.
 - Docker convenience aliases: `docker-build`, `docker-run`.
 - Podman convenience aliases: `podman-build`, `podman-run` with
   `--userns=keep-id`.

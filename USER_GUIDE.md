@@ -14,7 +14,82 @@
 
 ---
 
-## 1. Design Goals
+## 1. Prerequisites
+
+### 1.1 Primary runtime: nerdctl + containerd (rootless)
+
+This is the default development runtime. Install nerdctl and containerd
+following the [nerdctl documentation](https://github.com/containerd/nerdctl).
+
+### 1.2 Optional: Docker Engine (rootful testing)
+
+Docker Engine is required for `make test-docker` and rootful testing.
+
+```bash
+# Ubuntu 24.04
+sudo apt-get update
+sudo apt-get install -y docker.io docker-buildx
+
+# Add your user to the docker group.
+sudo usermod -aG docker "$USER"
+
+# Apply the group change — log out and back in.
+# Verify after re-login.
+docker --version
+docker buildx version
+```
+
+> **Do not use `newgrp docker`** as a shortcut to apply the group change.
+> It sets `docker` as the primary GID, which breaks Podman's `newuidmap`
+> if Podman is also installed. A full logout/login picks up `docker` as a
+> supplementary group and avoids this conflict.
+
+Docker Engine coexists safely with rootless nerdctl/containerd. Docker runs
+a system-level containerd at `/run/containerd/containerd.sock`, while rootless
+nerdctl runs a user-space containerd at `~/.local/share/containerd/`. They use
+separate storage and do not conflict.
+
+### 1.3 Optional: Podman (rootless testing)
+
+Podman is required for `make test-podman`.
+
+```bash
+# Ubuntu 24.04
+sudo apt-get update
+sudo apt-get install -y podman
+```
+
+Podman rootless requires `crun` and `fuse-overlayfs`:
+
+```bash
+sudo apt-get install -y crun
+```
+
+Configure Podman to use `crun` and `fuse-overlayfs`:
+
+```ini
+# ~/.config/containers/containers.conf
+[engine]
+runtime = "crun"
+```
+
+```ini
+# ~/.config/containers/storage.conf
+[storage]
+driver = "overlay"
+
+[storage.options.overlay]
+mount_program = "/usr/local/bin/fuse-overlayfs"
+```
+
+> **Known limitation**: Podman's `--userns=keep-id` requires kernel support
+> for unprivileged private mounts. This does not work in Parallels Desktop
+> VMs due to kernel restrictions on mount propagation. Testing on bare-metal
+> Ubuntu or non-Parallels VMs is pending. See §16 for testing status.
+
+---
+
+## 2. Design Goals
 
 1. **One image, any developer** — a pre-built image from GHCR works for any
    developer without rebuilding. User identity is provided at run time, not
@@ -30,7 +105,7 @@
 
 ---
 
-## 2. Architecture: Runtime-Adaptive User
+## 3. Architecture: Runtime-Adaptive User
 
 ### Previous design (build-time user)
 
@@ -55,7 +130,7 @@ $(pwd)     → -v mount   ───→  /workspace (bind mount)
 
 ---
 
-## 3. File Inventory
+## 4. File Inventory
 
 ```
 dev_container_ada/
@@ -69,6 +144,9 @@ dev_container_ada/
 ├── CHANGELOG.md
 ├── Dockerfile
 ├── entrypoint.sh
+├── examples/
+│   └── hello_ada/
+├── exports/                ← temporary AI-assisted context files
 ├── LICENSE
 ├── Makefile
 ├── README.md
@@ -77,9 +155,9 @@ dev_container_ada/
 
 ---
 
-## 4. Dockerfile Changes
+## 5. Dockerfile Changes
 
-### 4.1 Fix the ENV PATH bug
+### 5.1 Fix the ENV PATH bug
 
 The current single `ENV` block resolves `${HOME}` against its value _before_
 the instruction runs (which is `/root` in the base image). Split into two
@@ -96,7 +174,7 @@ ENV LANG=en_US.UTF-8 \
     TZ=UTC
 ```
 
-### 4.2 Install gosu
+### 5.2 Install gosu
 
 Add `gosu` to the base packages list. `gosu` is a lightweight
 privilege-dropping tool designed for container entrypoints. It is preferred
@@ -110,11 +188,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ...
 ```
 
-### 4.3 Remove the commented-out package
+### 5.3 Remove the commented-out package
 
 Remove the commented-out `zsh-history-substring-search` line entirely.
 
-### 4.4 Add entrypoint.sh
+### 5.4 Add entrypoint.sh
 
 Copy the entrypoint script into the image and set it as `ENTRYPOINT`. The
 `CMD` remains `zsh -l` so that it can be overridden.
@@ -127,7 +205,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/bin/zsh", "-l"]
 ```
 
-### 4.5 Keep build-time user creation
+### 5.5 Keep build-time user creation
 
 The build-time user (`dev:1000:1000`) is still created so that:
 - Alire toolchain installation runs as non-root during the build.
@@ -137,7 +215,7 @@ The build-time user (`dev:1000:1000`) is still created so that:
 
 The `USER` directive remains so that the image's default user is non-root.
 
-### 4.6 Change WORKDIR to /workspace
+### 5.6 Change WORKDIR to /workspace
 
 ```dockerfile
 WORKDIR /workspace
@@ -148,9 +226,9 @@ username to determine the working directory.
 
 ---
 
-## 5. Entrypoint Script (entrypoint.sh)
+## 6. Entrypoint Script (entrypoint.sh)
 
-### 5.1 Responsibilities
+### 6.1 Responsibilities
 
 1. Export container-detection environment variables (`IN_CONTAINER=1`,
    `CONTAINER_RUNTIME`) so that `.zshrc` can detect the container environment
@@ -175,7 +253,7 @@ prompt consistency** — not for the final process UID. The process stays as
 container UID 0 (which maps to the host user). The created user is never
 `gosu`'d into in rootless mode.
 
-### 5.2 Rootless detection
+### 6.2 Rootless detection
 
 The entrypoint detects rootless mode by checking whether UID 0 inside the
 container maps to a non-root UID on the host:
@@ -194,7 +272,7 @@ is_rootless() {
 }
 ```
 
-### 5.3 Privilege drop decision
+### 6.3 Privilege drop decision
 
 ```
 if running as UID 0:
@@ -216,7 +294,7 @@ else:
 fi
 ```
 
-### 5.4 Error handling
+### 6.4 Error handling
 
 - If `HOST_UID` is set but `HOST_USER` is not, default `HOST_USER` to `dev`.
 - If `HOST_GID` is not set, default to the value of `HOST_UID`.
@@ -232,9 +310,9 @@ fi
 
 ---
 
-## 6. Makefile Changes
+## 7. Makefile Changes
 
-### 6.1 Remove hardcoded USERNAME default
+### 7.1 Remove hardcoded USERNAME default
 
 ```makefile
 HOST_USER    ?= $(shell whoami)
@@ -245,7 +323,7 @@ HOST_GID     ?= $(shell id -g)
 `USERNAME` is kept for the build-time fallback user in the Dockerfile (still
 defaults to `dev`).
 
-### 6.2 Configurable container CLI
+### 7.2 Configurable container CLI
 
 The container CLI defaults to `nerdctl` but is configurable so that the same
 run targets work for Docker without duplicating recipes:
@@ -266,7 +344,7 @@ docker-build:
     $(MAKE) build CONTAINER_CLI=docker
 ```
 
-### 6.3 Revised targets
+### 7.3 Revised targets
 
 ```makefile
 # Primary local workflow
@@ -327,7 +405,7 @@ Note: `USER_UID`, `USER_GID`, `USERNAME` build args are no longer needed in
 the build targets because the image ships with a fixed fallback user. The
 Alire toolchain is installed during the build under that fallback user.
 
-### 6.4 Housekeeping targets
+### 7.4 Housekeeping targets
 
 ```makefile
 # Remove build artifacts (dist/, source archives)
@@ -344,16 +422,16 @@ compress:
 `PROJECT_NAME` defaults to `dev_container_ada` and is used as the archive
 filename and internal directory prefix.
 
-### 6.5 Help target update
+### 7.5 Help target update
 
 Update the help text to reflect the new targets and the `HOST_USER`,
 `HOST_UID`, `HOST_GID` variables.
 
 ---
 
-## 7. README Changes
+## 8. README Changes
 
-### 7.1 Deployment Environments section
+### 8.1 Deployment Environments section
 
 Add a section describing the three supported environments:
 
@@ -394,7 +472,7 @@ containers:
 - Kubernetes manifests and Helm charts are not included. Teams should create
   these per their cluster policies.
 
-### 7.2 Rootless security note
+### 8.2 Rootless security note
 
 Add a short paragraph explaining why `-u 0` / staying as UID 0 in rootless
 mode is safe:
@@ -408,7 +486,7 @@ mode is safe:
 
 ---
 
-## 8. Container Detection (.zshrc)
+## 9. Container Detection (.zshrc)
 
 ### Previous approach (unreliable under nerdctl/containerd)
 
@@ -451,21 +529,21 @@ fi
 
 ---
 
-## 9. CI Workflow Adjustments
+## 10. CI Workflow Adjustments
 
-### 9.1 docker-build.yml
+### 10.1 docker-build.yml
 
 - Remove `USER_UID` and `USER_GID` build args (no longer needed).
 - Remove the duplicate matrix entry. The current matrix has two entries
   ("default" and "stable") with identical versions. Keep a single entry now
   and add a real second GNAT version when one is actually needed.
 
-### 9.2 docker-publish.yml
+### 10.2 docker-publish.yml
 
 - Remove `USER_UID` and `USER_GID` build args.
 - No other changes needed.
 
-### 9.3 Tag-triggered publish uses hardcoded defaults
+### 10.3 Tag-triggered publish uses hardcoded defaults
 
 When `docker-publish.yml` is triggered by a **tag push** (e.g., `gnat-16.0.0`),
 `github.event.inputs` is not populated — that object is only set for
@@ -485,7 +563,7 @@ second GNAT version is actually needed.
 
 ---
 
-## 10. Security Model Summary
+## 11. Security Model Summary
 
 | Runtime             | Container UID 0 is... | Bind mount access via... | Security boundary        |
 |---------------------|-----------------------|--------------------------|--------------------------|
@@ -496,7 +574,7 @@ second GNAT version is actually needed.
 
 ---
 
-## 11. Resolved Questions
+## 12. Resolved Questions
 
 1. **gosu vs su-exec**: `gosu` — more common in Docker ecosystems, available
    in Ubuntu apt. **Decided.**
@@ -533,13 +611,13 @@ second GNAT version is actually needed.
    unprivileged on the host, so `sudo` inside the container does not grant
    any additional host-level access. **Decided.**
 
-## 12. Remaining Open Questions
+## 13. Remaining Open Questions
 
 None at this time.
 
 ---
 
-## 13. Implementation Order
+## 14. Implementation Order
 
 1. Create `entrypoint.sh`
 2. Modify `Dockerfile` (ENV fix, gosu, entrypoint, remove commented package)
@@ -552,9 +630,9 @@ None at this time.
 
 ---
 
-## 14. Upgrading Component Versions
+## 15. Upgrading Component Versions
 
-### 14.1 Ubuntu base image
+### 15.1 Ubuntu base image
 
 The base image is pinned by digest in the `Dockerfile` for reproducibility.
 To update:
@@ -572,7 +650,7 @@ nerdctl image inspect ubuntu:24.04 \
 
 Rebuild and test the image after updating.
 
-### 14.2 Alire
+### 15.2 Alire
 
 1. Check the latest release at
    `https://github.com/alire-project/alire/releases`.
@@ -588,7 +666,7 @@ Rebuild and test the image after updating.
 3. Update `ALIRE_VERSION`, `ALIRE_ZIP`, and `ALIRE_SHA256` in the Dockerfile.
 4. Rebuild and verify that `alr version` reports the expected release.
 
-### 14.3 GNAT and GPRBuild
+### 15.3 GNAT and GPRBuild
 
 1. Check available versions: `alr search gnat_native` and
    `alr search gprbuild`.
@@ -597,9 +675,14 @@ Rebuild and test the image after updating.
    - `Makefile` (variable defaults)
    - `.github/workflows/docker-build.yml` (matrix)
    - `.github/workflows/docker-publish.yml` (input defaults and fallbacks)
-3. Rebuild and verify: `gnat --version`, `gprbuild --version`, `alr toolchain`.
+3. Rebuild and verify: `alr version`, `alr toolchain`.
 
-### 14.4 Checklist
+> **Note**: The Alire crate version (e.g., `gnat_native=15.2.1`) may differ
+> from the version reported by the binary itself (`gnat --version` →
+> `GNAT 15.2.0`). The Alire crate version reflects the packaging; use
+> `alr version` or `alr toolchain` to see the authoritative installed versions.
+
+### 15.4 Checklist
 
 - [ ] Update version numbers / digests in all files listed above.
 - [ ] Rebuild the image: `make build-no-cache`.
@@ -608,7 +691,7 @@ Rebuild and test the image after updating.
 
 ---
 
-## 15. Pre-Release Testing Status
+## 16. Pre-Release Testing Status
 
 This section tracks testing gaps that should be resolved before the first
 public release. Remove or update entries as they are verified.
@@ -616,11 +699,11 @@ public release. Remove or update entries as they are verified.
 | Area                              | Status       | Notes                                                        |
 |-----------------------------------|--------------|--------------------------------------------------------------|
 | Rootless nerdctl (local)          | Verified     | Primary development environment (Ubuntu 24.04, nerdctl 2.2.1)|
-| Docker rootful (local)            | Not tested   | Docker is not installed on the development host.             |
-| GitHub Actions build workflow     | Not tested   | Reviewed for syntax and logic; will be validated on first push to GitHub. |
-| GitHub Actions publish workflow   | Not tested   | Same as above. Tag-triggered path uses hardcoded defaults (see §9.3). |
+| Docker rootful (local)            | Verified     | Tested locally before Docker was removed from the development host. |
+| GitHub Actions build workflow     | Verified     | Passed on initial push to main. Includes hello_ada compile and run. |
+| GitHub Actions publish workflow   | Verified     | Passed on v1.0.0-rc1 tag push. Tag-triggered path uses hardcoded defaults (see §10.3). |
 | Local CI simulation               | Not possible | Docker is required to replicate GitHub Actions locally.      |
-| Podman rootless (local)           | Not tested   | Targets implemented; Podman is not installed on the development host. |
+| Podman rootless (local)           | Blocked      | `--userns=keep-id` fails in Parallels VM (kernel restriction). Builds and runs without `--userns=keep-id`. Retest on bare-metal Ubuntu. |
 | Kubernetes deployment             | Not tested   | Image is designed to be compatible; no cluster available for testing. |
 
 ---

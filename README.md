@@ -136,7 +136,9 @@ make podman-run
 
 Podman rootless uses `--userns=keep-id` to map the host user directly into the
 container without needing the `HOST_*` environment variables or entrypoint
-adaptation. Podman support is implemented but not yet tested.
+adaptation. Podman requires `crun` and `fuse-overlayfs`. The `--userns=keep-id`
+flag requires kernel support for unprivileged private mounts (see User Guide
+for details and known VM limitations).
 
 ## Housekeeping
 
@@ -258,6 +260,9 @@ dev_container_ada/
 ├── CHANGELOG.md
 ├── Dockerfile
 ├── entrypoint.sh
+├── examples/
+│   └── hello_ada/
+├── exports/                ← temporary AI-assisted context files
 ├── LICENSE
 ├── Makefile
 ├── README.md

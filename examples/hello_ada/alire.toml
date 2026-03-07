@@ -1,0 +1,12 @@
+name = "hello_ada"
+description = "A simple hello world application for testing the development container."
+version = "0.1.0-dev"
+
+authors = ["Builder Buildit"]
+maintainers = ["Builder Buildit <builderbuildit@example.com>"]
+maintainers-logins = ["abohlib"]
+licenses = "BSD-3-Clause"
+website = "tdb"
+tags = ["ada", "dev", "container", "dev-container", "docker", "nerdctl", "podman"]
+
+executables = ["hello_ada"]

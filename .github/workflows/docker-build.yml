@@ -39,14 +39,20 @@ jobs:
       - name: Smoke test
         run: |
           docker run --rm \
+            -v "${{ github.workspace }}":/workspace \
+            -w /workspace/examples/hello_ada \
             dev-container-ada:${{ matrix.name }}-gnat-${{ matrix.gnat_version }} \
             bash -c '
               set -e
               echo "=== Smoke test ==="
               alr version
-              gprbuild --version
-              gnat --version
+              alr exec -- gprbuild --version
+              alr exec -- gnat --version
               id
               echo "HOME=$HOME"
+              echo ""
+              echo "=== Compile test ==="
+              alr exec -- gprbuild -P hello_ada.gpr -j0
+              bin/hello_ada
               echo "=== Smoke test passed ==="
             '

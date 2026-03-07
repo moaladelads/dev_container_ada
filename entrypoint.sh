@@ -62,7 +62,7 @@ is_rootless() {
         # In rootless mode, container UID 0 maps to a non-zero host UID.
         # The uid_map line for UID 0 looks like: "0  <host_uid>  1"
         local host_uid
-        host_uid=$(awk '/^\s*0\s/ { print $2 }' /proc/self/uid_map)
+        host_uid=$(awk '$1 == 0 { print $2 }' /proc/self/uid_map)
         [ "$host_uid" != "0" ]
     else
         return 1

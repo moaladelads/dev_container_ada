@@ -28,6 +28,8 @@ bin
 build
 coverage
 dist
+examples
+exports
 lib
 Makefile
 obj

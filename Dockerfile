@@ -187,7 +187,7 @@ RUN mkdir -p \
     "${HOME}/.local/bin" \
     "${HOME}/workspace"
 
-COPY --chown=${USERNAME}:${USERNAME} .zshrc ${HOME}/.zshrc
+COPY --chown=${USER_UID}:${USER_GID} .zshrc ${HOME}/.zshrc
 
 # ----------------------------------------------------------------------------
 # Configure Alire toolchain
