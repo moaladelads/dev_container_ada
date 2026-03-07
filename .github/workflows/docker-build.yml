@@ -1,0 +1,52 @@
+# ============================================================================
+# docker-build.yml
+# ============================================================================
+# Copyright (c) 2025 Michael Gardner, A Bit of Help, Inc.
+# SPDX-License-Identifier: BSD-3-Clause
+# See LICENSE file in the project root.
+# ============================================================================
+
+name: Docker Build
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "default"
+            gnat_version: "15.2.1"
+            gprbuild_version: "25.0.1"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build container image
+        run: |
+          docker build \
+            --build-arg GNAT_VERSION=${{ matrix.gnat_version }} \
+            --build-arg GPRBUILD_VERSION=${{ matrix.gprbuild_version }} \
+            -t dev-container-ada:${{ matrix.name }}-gnat-${{ matrix.gnat_version }} .
+
+      - name: Smoke test
+        run: |
+          docker run --rm \
+            dev-container-ada:${{ matrix.name }}-gnat-${{ matrix.gnat_version }} \
+            bash -c '
+              set -e
+              echo "=== Smoke test ==="
+              alr version
+              gprbuild --version
+              gnat --version
+              id
+              echo "HOME=$HOME"
+              echo "=== Smoke test passed ==="
+            '
