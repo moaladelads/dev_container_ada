@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Makefile `pull` and `pull-system` targets that pull from GHCR and tag for
   local use, so `make run` / `make run-system` work without building locally.
+- Makefile convenience aliases: `docker-pull`, `docker-pull-system`,
+  `podman-pull`, `podman-pull-system`.
 
 ## [2.1.0] - 2026-03-08
 

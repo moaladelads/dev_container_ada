@@ -87,12 +87,16 @@ help:
 	@echo "  tag-latest-system    Tag local image as latest"
 	@echo ""
 	@echo "Docker convenience aliases:"
+	@echo "  docker-pull          Pull the default image with docker"
+	@echo "  docker-pull-system   Pull the system image with docker"
 	@echo "  docker-build         Build the default image with docker"
 	@echo "  docker-build-system  Build the system image with docker"
 	@echo "  docker-run           Run the default image with docker"
 	@echo "  docker-run-system    Run the system image with docker"
 	@echo ""
 	@echo "Podman convenience aliases:"
+	@echo "  podman-pull          Pull the default image with podman"
+	@echo "  podman-pull-system   Pull the system image with podman"
 	@echo "  podman-build         Build the default image with podman"
 	@echo "  podman-build-system  Build the system image with podman"
 	@echo "  podman-run           Run with podman (--userns=keep-id)"
@@ -327,6 +331,14 @@ test-podman-system:
 # ----------------------------------------------------------------------------
 # Docker convenience aliases
 # ----------------------------------------------------------------------------
+.PHONY: docker-pull
+docker-pull:
+	$(MAKE) pull CONTAINER_CLI=docker
+
+.PHONY: docker-pull-system
+docker-pull-system:
+	$(MAKE) pull-system CONTAINER_CLI=docker
+
 .PHONY: docker-build
 docker-build:
 	$(MAKE) build CONTAINER_CLI=docker
@@ -350,6 +362,14 @@ docker-run-system:
 # into the container, so HOST_* env vars and entrypoint adaptation are not
 # needed.  The entrypoint detects a non-root UID and execs the CMD directly.
 # ----------------------------------------------------------------------------
+.PHONY: podman-pull
+podman-pull:
+	$(MAKE) pull CONTAINER_CLI=podman
+
+.PHONY: podman-pull-system
+podman-pull-system:
+	$(MAKE) pull-system CONTAINER_CLI=podman
+
 .PHONY: podman-build
 podman-build:
 	$(MAKE) build CONTAINER_CLI=podman
