@@ -31,6 +31,7 @@ PROJECT_NAME     ?= dev_container_ada
 # Image settings
 # ----------------------------------------------------------------------------
 IMAGE_NAME       ?= dev-container-ada
+SYSTEM_IMAGE_NAME ?= $(IMAGE_NAME)-system
 IMAGE_REGISTRY   ?= ghcr.io/abitofhelp
 IMAGE_REF        ?= $(IMAGE_REGISTRY)/$(IMAGE_NAME)
 
@@ -54,51 +55,71 @@ CONTAINER_CLI    ?= nerdctl
 
 .PHONY: help
 help:
-	@echo "Targets:"
-	@echo "  build            Build the image"
-	@echo "  build-no-cache   Build the image without cache"
-	@echo "  run              Run the image interactively (mounts current directory)"
-	@echo "  run-root         Run the image as root, bypassing the entrypoint (diagnostic)"
-	@echo "  run-shell        Run the image and open zsh in the user home directory"
-	@echo "  inspect          Show configured image and runtime settings"
-	@echo "  save             Save the image to dist/"
-	@echo "  show-tags        Show suggested tags"
-	@echo "  tag-gnat         Tag local image with GNAT version"
-	@echo "  tag-latest       Tag local image as latest"
-	@echo "  test             Build and run hello_ada example (nerdctl rootless)"
-	@echo "  test-docker      Build and run hello_ada example (docker rootful)"
-	@echo "  test-podman      Build and run hello_ada example (podman rootless)"
-	@echo "  clean            Remove build artifacts (dist/, archives)"
-	@echo "  compress         Create a compressed source archive from HEAD"
-	@echo "  docker-build     Build with docker instead of nerdctl"
-	@echo "  docker-run       Run with docker instead of nerdctl"
-	@echo "  podman-build     Build with podman instead of nerdctl"
-	@echo "  podman-run       Run with podman (uses --userns=keep-id)"
+	@echo "Targets (default — Alire toolchain, Dockerfile):"
+	@echo "  build                Build the default image"
+	@echo "  build-no-cache       Build the default image without cache"
+	@echo "  run                  Run the default image interactively"
+	@echo ""
+	@echo "Targets (system toolchain, Dockerfile.system):"
+	@echo "  build-system         Build the system-toolchain image"
+	@echo "  build-system-no-cache Build the system-toolchain image without cache"
+	@echo "  run-system           Run the system-toolchain image interactively"
+	@echo ""
+	@echo "Targets (general):"
+	@echo "  run-root             Run the image as root, bypassing the entrypoint (diagnostic)"
+	@echo "  run-shell            Run the image and open zsh in the user home directory"
+	@echo "  inspect              Show configured image and runtime settings"
+	@echo "  save                 Save the image to dist/"
+	@echo "  show-tags            Show suggested tags"
+	@echo "  tag-gnat             Tag local image with GNAT version"
+	@echo "  tag-latest           Tag local image as latest"
+	@echo "  test                 Build and run hello_ada example (nerdctl rootless)"
+	@echo "  test-docker          Build and run hello_ada example (docker rootful)"
+	@echo "  test-podman          Build and run hello_ada example (podman rootless)"
+	@echo "  clean                Remove build artifacts (dist/, archives)"
+	@echo "  compress             Create a compressed source archive from HEAD"
+	@echo "  docker-build         Build with docker instead of nerdctl"
+	@echo "  docker-run           Run with docker instead of nerdctl"
+	@echo "  podman-build         Build with podman instead of nerdctl"
+	@echo "  podman-run           Run with podman (uses --userns=keep-id)"
 	@echo ""
 	@echo "Variables:"
-	@echo "  CONTAINER_CLI    Container CLI to use (default: nerdctl)"
-	@echo "  HOST_USER        Host username (default: $$(whoami))"
-	@echo "  HOST_UID         Host user ID (default: $$(id -u))"
-	@echo "  HOST_GID         Host group ID (default: $$(id -g))"
-	@echo "  GNAT_VERSION     GNAT version for build (default: 15.2.1)"
-	@echo "  GPRBUILD_VERSION GPRBuild version for build (default: 25.0.1)"
+	@echo "  CONTAINER_CLI        Container CLI to use (default: nerdctl)"
+	@echo "  HOST_USER            Host username (default: $$(whoami))"
+	@echo "  HOST_UID             Host user ID (default: $$(id -u))"
+	@echo "  HOST_GID             Host group ID (default: $$(id -g))"
+	@echo "  GNAT_VERSION         GNAT version for Alire build (default: 15.2.1)"
+	@echo "  GPRBUILD_VERSION     GPRBuild version for Alire build (default: 25.0.1)"
 
 # ----------------------------------------------------------------------------
 # Build targets
 # ----------------------------------------------------------------------------
 .PHONY: build
 build:
-	$(CONTAINER_CLI) build \
+	$(CONTAINER_CLI) build -f Dockerfile \
 		--build-arg GNAT_VERSION=$(GNAT_VERSION) \
 		--build-arg GPRBUILD_VERSION=$(GPRBUILD_VERSION) \
 		-t $(IMAGE_NAME) .
 
 .PHONY: build-no-cache
 build-no-cache:
-	$(CONTAINER_CLI) build --no-cache \
+	$(CONTAINER_CLI) build --no-cache -f Dockerfile \
 		--build-arg GNAT_VERSION=$(GNAT_VERSION) \
 		--build-arg GPRBUILD_VERSION=$(GPRBUILD_VERSION) \
 		-t $(IMAGE_NAME) .
+
+# ----------------------------------------------------------------------------
+# System-toolchain build targets
+# ----------------------------------------------------------------------------
+.PHONY: build-system
+build-system:
+	$(CONTAINER_CLI) build -f Dockerfile.system \
+		-t $(SYSTEM_IMAGE_NAME) .
+
+.PHONY: build-system-no-cache
+build-system-no-cache:
+	$(CONTAINER_CLI) build --no-cache -f Dockerfile.system \
+		-t $(SYSTEM_IMAGE_NAME) .
 
 # ----------------------------------------------------------------------------
 # Run targets
@@ -131,6 +152,16 @@ run-shell:
 		-v "$(CURDIR)":/workspace \
 		-w /home/$(HOST_USER) \
 		$(IMAGE_NAME)
+
+.PHONY: run-system
+run-system:
+	$(CONTAINER_CLI) run -it --rm \
+		-e HOST_UID=$(HOST_UID) \
+		-e HOST_GID=$(HOST_GID) \
+		-e HOST_USER=$(HOST_USER) \
+		-v "$(CURDIR)":/workspace \
+		-w /workspace \
+		$(SYSTEM_IMAGE_NAME)
 
 # ----------------------------------------------------------------------------
 # Test targets
@@ -224,14 +255,15 @@ podman-run:
 # ----------------------------------------------------------------------------
 .PHONY: inspect
 inspect:
-	@echo "IMAGE_NAME       = $(IMAGE_NAME)"
-	@echo "IMAGE_REF        = $(IMAGE_REF)"
-	@echo "CONTAINER_CLI    = $(CONTAINER_CLI)"
-	@echo "GNAT_VERSION     = $(GNAT_VERSION)"
-	@echo "GPRBUILD_VERSION = $(GPRBUILD_VERSION)"
-	@echo "HOST_USER        = $(HOST_USER)"
-	@echo "HOST_UID         = $(HOST_UID)"
-	@echo "HOST_GID         = $(HOST_GID)"
+	@echo "IMAGE_NAME         = $(IMAGE_NAME)"
+	@echo "SYSTEM_IMAGE_NAME  = $(SYSTEM_IMAGE_NAME)"
+	@echo "IMAGE_REF          = $(IMAGE_REF)"
+	@echo "CONTAINER_CLI      = $(CONTAINER_CLI)"
+	@echo "GNAT_VERSION       = $(GNAT_VERSION)"
+	@echo "GPRBUILD_VERSION   = $(GPRBUILD_VERSION)"
+	@echo "HOST_USER          = $(HOST_USER)"
+	@echo "HOST_UID           = $(HOST_UID)"
+	@echo "HOST_GID           = $(HOST_GID)"
 
 .PHONY: save
 save:

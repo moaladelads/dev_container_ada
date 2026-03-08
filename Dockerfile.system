@@ -1,57 +1,47 @@
 # ============================================================================
-# Dockerfile — Alire-managed toolchain (default)
+# Dockerfile.system — Ubuntu system toolchain (alternate)
 # ============================================================================
 # Copyright (c) 2025 Michael Gardner, A Bit of Help, Inc.
 # SPDX-License-Identifier: BSD-3-Clause
 # See LICENSE file in the project root.
 # ============================================================================
 #
-# Ada Development Container — Alire-managed Toolchain
+# Ada Development Container — System Toolchain
 #
 # Repository: dev_container_ada
-# Docker Image: ghcr.io/abitofhelp/dev-container-ada
+# Docker Image: ghcr.io/abitofhelp/dev-container-ada-system
 #
-# This Dockerfile uses Ubuntu 22.04 as the base image and installs GNAT
-# and GPRBuild via Alire's toolchain management. Alire's downloadable
-# Linux GNAT toolchains are built on Ubuntu 22.04, making this the most
-# conservative pairing.
+# This Dockerfile uses Ubuntu 24.04 as the base image and installs GNAT
+# and GPRBuild from Ubuntu's system packages. Alire is installed as a
+# workspace/dependency management tool but does not manage the compiler
+# toolchain.
 #
 # Recommended for:
-#   • New Ada developers (Alire manages the full toolchain)
-#   • Cross-target and embedded development (Alire distributes cross compilers)
-#   • Projects that need specific GNAT/GPRBuild version combinations
+#   • Developers who prefer Ubuntu's packaged compilers
+#   • Projects that only need native compilation (no cross-target)
+#   • Teams that want compiler updates tied to Ubuntu's release cycle
 #
-# For an alternative using Ubuntu 24.04 with system-packaged compilers,
-# see Dockerfile.system.
+# For the default Dockerfile using Alire-managed toolchains on Ubuntu
+# 22.04, see Dockerfile.
 #
 # Purpose
 # -------
 # Reproducible development environment for:
-#   • Ada development using Alire
-#   • GNAT compiler toolchain (Alire-managed)
-#   • GPRBuild build system (Alire-managed)
+#   • Ada development using Alire (workspace tool)
+#   • GNAT Ada compiler (Ubuntu system package)
+#   • GPRBuild build system (Ubuntu system package)
 #   • Python 3 + venv
 #   • Zsh interactive shell
 #
 # Designed for nerdctl + containerd (rootless).
 #
 # Files expected in the build context:
-# - Dockerfile
+# - Dockerfile.system
 # - .dockerignore
 # - .zshrc
 #
-# Default toolchain versions:
-# - GNAT_VERSION=15.2.1
-# - GPRBUILD_VERSION=25.0.1
-#
-# Override toolchain versions at build time:
-# nerdctl build \
-#   --build-arg GNAT_VERSION=15.2.2 \
-#   --build-arg GPRBUILD_VERSION=25.0.2 \
-#   -t dev-container-ada .
-#
 # Build example:
-# nerdctl build -t dev-container-ada .
+# nerdctl build -f Dockerfile.system -t dev-container-ada-system .
 #
 # Run example:
 # nerdctl run -it --rm \
@@ -60,7 +50,7 @@
 #   -e HOST_USER=$(whoami) \
 #   -v "$(pwd)":/workspace \
 #   -w /workspace \
-#   dev-container-ada
+#   dev-container-ada-system
 #
 # Notes
 # -----
@@ -74,17 +64,16 @@
 # - GNU Make is installed explicitly because many projects use Makefiles as
 #   the orchestration layer around alr, gprbuild, tests, formatting, and
 #   scripts.
-# - build-essential is intentionally not installed, to avoid introducing a
-#   second Ubuntu-managed compiler toolchain that could conflict with Alire's
-#   GNAT toolchain.
+# - GNAT and GPRBuild come from Ubuntu's apt repositories. No Alire
+#   toolchain selection step is needed.
 #
 # ============================================================================
 
 # syntax=docker/dockerfile:1.7
 # Pinned by digest for reproducibility. Update periodically:
-#   nerdctl pull ubuntu:22.04
-#   nerdctl image inspect ubuntu:22.04 | grep -A1 RepoDigests
-FROM ubuntu:22.04@sha256:3ba65aa20f86a0fad9df2b2c259c613df006b2e6d0bfcc8a146afb8c525a9751
+#   nerdctl pull ubuntu:24.04
+#   nerdctl image inspect ubuntu:24.04 | grep -A1 RepoDigests
+FROM ubuntu:24.04@sha256:d1e2e92c075e5ca139d51a140fff46f84315c0fdce203eab2807c7e495eff4f9
 
 # ----------------------------------------------------------------------------
 # Build arguments (alphabetized)
@@ -93,8 +82,6 @@ ARG ALIRE_SHA256=e3b32cb0afe981b23d1a68da77452cf81ee1d82de8ebaf01c5e233be8b463fb
 ARG ALIRE_VERSION=2.1.0
 ARG ALIRE_ZIP=alr-2.1.0-bin-x86_64-linux.zip
 ARG DEBIAN_FRONTEND=noninteractive
-ARG GNAT_VERSION=15.2.1
-ARG GPRBUILD_VERSION=25.0.1
 ARG USER_GID=1000
 ARG USERNAME=dev
 ARG USER_UID=1000
@@ -114,7 +101,7 @@ ENV LANG=en_US.UTF-8 \
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # ----------------------------------------------------------------------------
-# Base packages (alphabetized)
+# Base packages + system Ada toolchain (alphabetized)
 # ----------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -123,7 +110,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     file \
     fzf \
     git \
+    gnat-13 \
     gosu \
+    gprbuild \
     jq \
     less \
     locales \
@@ -153,6 +142,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 # ----------------------------------------------------------------------------
+# Set up update-alternatives so "gnat" points to gnat-13
+# ----------------------------------------------------------------------------
+RUN update-alternatives --install /usr/bin/gnat gnat /usr/bin/gnat-13 100 \
+ && update-alternatives --install /usr/bin/gnatmake gnatmake /usr/bin/gnatmake-13 100 \
+ && update-alternatives --install /usr/bin/gnatbind gnatbind /usr/bin/gnatbind-13 100 \
+ && update-alternatives --install /usr/bin/gnatlink gnatlink /usr/bin/gnatlink-13 100 \
+ && update-alternatives --install /usr/bin/gnatls gnatls /usr/bin/gnatls-13 100
+
+# ----------------------------------------------------------------------------
 # Create developer user
 # ----------------------------------------------------------------------------
 RUN set -eux; \
@@ -180,7 +178,7 @@ COPY README.md /usr/share/doc/dev-container-ada/README.md
 COPY USER_GUIDE.md /usr/share/doc/dev-container-ada/USER_GUIDE.md
 
 # ----------------------------------------------------------------------------
-# Install Alire
+# Install Alire (workspace tool — does not manage the compiler toolchain)
 # ----------------------------------------------------------------------------
 WORKDIR /tmp
 RUN wget -q "https://github.com/alire-project/alire/releases/download/v${ALIRE_VERSION}/${ALIRE_ZIP}" \
@@ -203,38 +201,24 @@ RUN mkdir -p \
 COPY --chown=${USER_UID}:${USER_GID} .zshrc ${HOME}/.zshrc
 
 # ----------------------------------------------------------------------------
-# Configure Alire toolchain
+# Configure Alire to use system-installed GNAT (gnat_external)
 # ----------------------------------------------------------------------------
-RUN alr --non-interactive toolchain --select \
-        gnat_native=${GNAT_VERSION} \
-        gprbuild=${GPRBUILD_VERSION} \
+RUN alr --non-interactive toolchain --select gnat_external \
  && echo "" \
- && echo "Configured Alire environment:" \
- && alr version \
+ && echo "System toolchain:" \
+ && gnat --version \
+ && gprbuild --version \
  && echo "" \
- && echo "Installed toolchains:" \
+ && echo "Alire version:" \
+ && alr --version \
+ && echo "" \
+ && echo "Alire toolchain configuration:" \
  && alr toolchain
 
 # ----------------------------------------------------------------------------
 # Install entrypoint and set runtime defaults
 # ----------------------------------------------------------------------------
-# The entrypoint runs as root so it can create/adapt the user at startup.
-# In rootful runtimes it drops privileges via gosu.  In rootless runtimes
-# container UID 0 is already the unprivileged host user.
-# ----------------------------------------------------------------------------
 USER root
-
-# Create symlinks for toolchain binaries so gnat/gprbuild are available in
-# non-interactive contexts (scripts, CI, make) without sourcing .zshrc.
-RUN for d in /home/${USERNAME}/.local/share/alire/toolchains/*/bin; do \
-        if [ -d "$d" ]; then \
-            for bin in "$d"/*; do \
-                name="$(basename "$bin")"; \
-                [ ! -e "/usr/local/bin/$name" ] && \
-                    ln -s "$bin" "/usr/local/bin/$name"; \
-            done; \
-        fi; \
-    done
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh

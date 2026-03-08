@@ -21,20 +21,34 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: "default"
+          - name: "alire"
+            dockerfile: "Dockerfile"
+            image_name: "dev-container-ada"
             gnat_version: "15.2.1"
             gprbuild_version: "25.0.1"
+          - name: "system"
+            dockerfile: "Dockerfile.system"
+            image_name: "dev-container-ada-system"
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - name: Build container image
+      - name: Build container image (Alire toolchain)
+        if: matrix.name == 'alire'
         run: |
           docker build \
+            -f ${{ matrix.dockerfile }} \
             --build-arg GNAT_VERSION=${{ matrix.gnat_version }} \
             --build-arg GPRBUILD_VERSION=${{ matrix.gprbuild_version }} \
-            -t dev-container-ada:${{ matrix.name }}-gnat-${{ matrix.gnat_version }} .
+            -t ${{ matrix.image_name }}:ci .
+
+      - name: Build container image (system toolchain)
+        if: matrix.name == 'system'
+        run: |
+          docker build \
+            -f ${{ matrix.dockerfile }} \
+            -t ${{ matrix.image_name }}:ci .
 
       - name: Smoke test
         run: |
@@ -44,13 +58,13 @@ jobs:
             -e HOST_USER=$(whoami) \
             -v "${{ github.workspace }}":/workspace \
             -w /workspace/examples/hello_ada \
-            dev-container-ada:${{ matrix.name }}-gnat-${{ matrix.gnat_version }} \
+            ${{ matrix.image_name }}:ci \
             bash -c '
               set -e
               echo "=== Smoke test ==="
               alr version
-              alr exec -- gprbuild --version
-              alr exec -- gnat --version
+              gprbuild --version
+              gnat --version
               id
               echo "HOME=$HOME"
               echo ""

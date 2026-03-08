@@ -8,9 +8,55 @@
 
 # User Guide: dev_container_ada
 
-**Version**: 2.0 (runtime-adaptive user)
-**Date**: 2026-03-06
+**Version**: 2.1 (dual-Dockerfile)
+**Date**: 2026-03-07
 **Authors**: Michael Gardner, Claude (Anthropic), GPT (OpenAI)
+
+---
+
+## 0. Choosing a Dockerfile
+
+### 0.1 Why there are two Dockerfiles
+
+Alire's downloadable Linux GNAT toolchains are built on Ubuntu 22.04. Using
+them on Ubuntu 24.04 works in practice, but Ubuntu 22.04 is the more
+conservative pairing — fewer surprises from glibc or runtime library
+differences.
+
+At the same time, Ubuntu 24.04 ships `gnat-13` and `gprbuild` as system
+packages. Developers who prefer system-packaged compilers — or whose projects
+only need native compilation — may find this simpler.
+
+Rather than declare one approach wrong, this project ships both:
+
+| Dockerfile | Base | Compiler source | Image name |
+|------------|------|-----------------|------------|
+| `Dockerfile` (default) | Ubuntu 22.04 | Alire-managed GNAT + GPRBuild | `dev-container-ada` |
+| `Dockerfile.system` | Ubuntu 24.04 | Ubuntu `gnat-13` + `gprbuild` packages | `dev-container-ada-system` |
+
+**Start with the default.** It gives you Alire's full toolchain management,
+including the ability to install cross compilers for embedded targets. Switch
+to `Dockerfile.system` if you prefer system packages and only need native
+compilation.
+
+### 0.2 What stays the same
+
+Regardless of which Dockerfile you choose:
+
+- The same `entrypoint.sh` handles runtime user adaptation.
+- The same `.zshrc` provides the container-aware prompt.
+- The same `examples/hello_ada/` smoke test works in both images.
+- Alire is installed as a workspace and dependency tool in both images.
+- All three deployment environments (rootless nerdctl, rootful Docker,
+  Kubernetes) are supported.
+
+### 0.3 Cross-target and embedded development
+
+If you need Alire-managed cross compilers (e.g., `gnat_arm_elf` for
+bare-metal ARM, `gnat_riscv64_elf` for RISC-V), use the default
+`Dockerfile`. Alire distributes these as downloadable toolchains, and they
+are built against Ubuntu 22.04. The system toolchain image does not support
+cross-target compilation through Alire.
 
 ---
 
@@ -142,7 +188,8 @@ dev_container_ada/
 ├── .gitignore
 ├── .zshrc
 ├── CHANGELOG.md
-├── Dockerfile
+├── Dockerfile              ← Alire-managed toolchain (Ubuntu 22.04)
+├── Dockerfile.system       ← system toolchain (Ubuntu 24.04)
 ├── entrypoint.sh
 ├── examples/
 │   └── hello_ada/
@@ -156,6 +203,12 @@ dev_container_ada/
 ---
 
 ## 5. Dockerfile Changes
+
+> **Note**: This section documents the design of `Dockerfile` (Alire-managed
+> toolchain). `Dockerfile.system` follows the same structure but installs GNAT
+> and GPRBuild from Ubuntu's apt repositories instead of Alire, omits the
+> `alr toolchain --select` step, and uses `update-alternatives` to create
+> unversioned `gnat` symlinks. See §0 for the rationale.
 
 ### 5.1 Fix the ENV PATH bug
 
@@ -346,12 +399,12 @@ docker-build:
 
 ### 7.3 Revised targets
 
-> **Important — Mount Point Selection**: The default `make run` mounts only the
-> current directory. If your project uses Alire path pins with relative paths
-> (e.g., `../deps26/AdaSAT-26.0.0`), you must mount high enough in the directory
-> tree for those references to resolve inside the container. See the
-> "Read Me First: Choosing the Right Mount Point" section in [README.md](README.md)
-> for the three scenarios and examples.
+> **Important — Mount Point Selection**: Both `make run` and `make run-system`
+> mount only the current directory. If your project uses Alire path pins with
+> relative paths (e.g., `../deps26/AdaSAT-26.0.0`), you must mount high enough
+> in the directory tree for those references to resolve inside the container.
+> See the "Read Me First: Choosing the Right Mount Point" section in
+> [README.md](README.md) for the three scenarios and examples.
 
 ```makefile
 # Primary local workflow
@@ -641,21 +694,27 @@ None at this time.
 
 ### 15.1 Ubuntu base image
 
-The base image is pinned by digest in the `Dockerfile` for reproducibility.
-To update:
+Both Dockerfiles pin their base image by digest for reproducibility.
+
+**Dockerfile (Ubuntu 22.04)**:
 
 ```bash
-# Pull the latest 24.04 tag.
-nerdctl pull ubuntu:24.04
-
-# Get the new digest.
-nerdctl image inspect ubuntu:24.04 \
+nerdctl pull ubuntu:22.04
+nerdctl image inspect ubuntu:22.04 \
   | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['RepoDigests'][0])"
-
-# Update the FROM line in the Dockerfile with the new digest.
+# Update the FROM line in Dockerfile with the new digest.
 ```
 
-Rebuild and test the image after updating.
+**Dockerfile.system (Ubuntu 24.04)**:
+
+```bash
+nerdctl pull ubuntu:24.04
+nerdctl image inspect ubuntu:24.04 \
+  | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['RepoDigests'][0])"
+# Update the FROM line in Dockerfile.system with the new digest.
+```
+
+Rebuild and test the affected image after updating.
 
 ### 15.2 Alire
 
@@ -675,6 +734,8 @@ Rebuild and test the image after updating.
 
 ### 15.3 GNAT and GPRBuild
 
+**Alire-managed toolchain (`Dockerfile`)**:
+
 1. Check available versions: `alr search gnat_native` and
    `alr search gprbuild`.
 2. Update `GNAT_VERSION` and `GPRBUILD_VERSION` in:
@@ -689,29 +750,50 @@ Rebuild and test the image after updating.
 > `GNAT 15.2.0`). The Alire crate version reflects the packaging; use
 > `alr version` or `alr toolchain` to see the authoritative installed versions.
 
+**System toolchain (`Dockerfile.system`)**:
+
+The system toolchain version is determined by Ubuntu's `gnat-13` package.
+To upgrade, wait for Ubuntu to ship a newer `gnat-*` package (e.g.,
+`gnat-14`), then update the `apt-get install` and `update-alternatives`
+lines in `Dockerfile.system`. Update the `system-gnat-13` tag in
+`.github/workflows/docker-publish.yml` to match.
+
 ### 15.4 Checklist
 
 - [ ] Update version numbers / digests in all files listed above.
-- [ ] Rebuild the image: `make build-no-cache`.
-- [ ] Run the image and verify toolchain versions.
+- [ ] Rebuild the Alire image: `make build-no-cache`.
+- [ ] Rebuild the system image: `make build-system-no-cache`.
+- [ ] Run each image and verify toolchain versions.
 - [ ] Commit, tag, and push.
 
 ---
 
 ## 16. Pre-Release Testing Status
 
-This section tracks testing gaps that should be resolved before the first
-public release. Remove or update entries as they are verified.
+This section tracks testing gaps that should be resolved before the next
+release. Remove or update entries as they are verified.
+
+### Alire-managed toolchain image (`Dockerfile`)
 
 | Area                              | Status       | Notes                                                        |
 |-----------------------------------|--------------|--------------------------------------------------------------|
-| Rootless nerdctl (local)          | Verified     | Primary development environment (Ubuntu 24.04, nerdctl 2.2.1)|
-| Docker rootful (local)            | Verified     | Tested locally before Docker was removed from the development host. |
-| GitHub Actions build workflow     | Verified     | Passed on initial push to main. Includes hello_ada compile and run. |
-| GitHub Actions publish workflow   | Verified     | Passed on v1.0.0-rc1 tag push. Tag-triggered path uses hardcoded defaults (see §10.3). |
-| Local CI simulation               | Not possible | Docker is required to replicate GitHub Actions locally.      |
-| Podman rootless (local)           | Blocked      | `--userns=keep-id` fails in Parallels VM (kernel restriction). Builds and runs without `--userns=keep-id`. Retest on bare-metal Ubuntu. |
-| Kubernetes deployment             | Not tested   | Image is designed to be compatible; no cluster available for testing. |
+| Rootless nerdctl (local)          | Verified     | Ubuntu 22.04 base, nerdctl 2.2.1. Build + smoke test passed.|
+| Docker rootful (macOS)            | Not tested   | Needs retest after Ubuntu 22.04 base change. Test on macOS host. |
+| GitHub Actions build workflow     | Not tested   | Needs CI run with matrix build.                              |
+| GitHub Actions publish workflow   | Not tested   | Needs CI run with two-job publish.                           |
+| Podman rootless (local)           | Blocked      | `--userns=keep-id` fails in Parallels VM (kernel restriction). |
+| Kubernetes deployment             | Not tested   | Image is designed to be compatible; no cluster available.    |
+
+### System toolchain image (`Dockerfile.system`)
+
+| Area                              | Status       | Notes                                                        |
+|-----------------------------------|--------------|--------------------------------------------------------------|
+| Rootless nerdctl (local)          | Verified     | Ubuntu 24.04 base, gnat-13, nerdctl 2.2.1. Build + smoke test passed. |
+| Docker rootful (macOS)            | Not tested   | New image — test on macOS host.                              |
+| GitHub Actions build workflow     | Not tested   | Needs CI run with matrix build.                              |
+| GitHub Actions publish workflow   | Not tested   | Needs CI run with two-job publish.                           |
+| Podman rootless (local)           | Blocked      | `--userns=keep-id` fails in Parallels VM (kernel restriction). |
+| Kubernetes deployment             | Not tested   | Image is designed to be compatible; no cluster available.    |
 
 ---
 

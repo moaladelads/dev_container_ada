@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `Dockerfile.system` for Ubuntu 24.04 with system-packaged GNAT and GPRBuild.
+- Makefile targets: `build-system`, `build-system-no-cache`, `run-system`.
+- CI matrix build for both Dockerfile variants in `docker-build.yml`.
+- Two-job publish workflow (`publish-alire` + `publish-system`) in
+  `docker-publish.yml`.
+- USER_GUIDE §0 "Choosing a Dockerfile" with rationale and guidance.
+
+### Changed
+
+- Default `Dockerfile` base image from Ubuntu 24.04 to Ubuntu 22.04, matching
+  the platform Alire's GNAT toolchains are built on.
+- GitHub Actions pinned by SHA digest for supply-chain security.
+- Documentation updated throughout for dual-Dockerfile structure.
+
 ## [1.0.0] - 2026-03-06
 
 ### Changed

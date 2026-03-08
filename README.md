@@ -8,11 +8,26 @@
 
 Professional Ada development container using **Alire**, **GNAT**, and **GPRBuild**.
 
-## Image Name
+## Image Names
 
 ```text
-ghcr.io/abitofhelp/dev-container-ada
+ghcr.io/abitofhelp/dev-container-ada          # Alire-managed toolchain (default)
+ghcr.io/abitofhelp/dev-container-ada-system   # Ubuntu system toolchain (alternate)
 ```
+
+## Choosing a Dockerfile
+
+This repository ships two Dockerfiles representing two valid toolchain strategies:
+
+| Dockerfile | Base | Compiler source | Image name |
+|------------|------|-----------------|------------|
+| `Dockerfile` (default) | Ubuntu 22.04 | Alire-managed GNAT + GPRBuild | `dev-container-ada` |
+| `Dockerfile.system` | Ubuntu 24.04 | Ubuntu `gnat-13` + `gprbuild` packages | `dev-container-ada-system` |
+
+**Which should I use?** Start with the default (`Dockerfile`). Alire's downloadable
+Linux GNAT toolchains are built on Ubuntu 22.04, making it the most conservative
+pairing. If you prefer Ubuntu's packaged compilers and only need native
+compilation, use `Dockerfile.system`. See USER_GUIDE §0 for detailed rationale.
 
 ## Why This Container Is Useful
 
@@ -37,18 +52,19 @@ parallels@container /workspace (main) [ctr:rootless]
 
 ## Features
 
-- Ubuntu 24.04
+- Two Dockerfile variants: Alire-managed toolchain (Ubuntu 22.04) and system
+  toolchain (Ubuntu 24.04)
 - Alire package manager
-- GNAT Ada compiler
-- GPRBuild
+- GNAT Ada compiler (Alire-managed or Ubuntu system package)
+- GPRBuild (Alire-managed or Ubuntu system package)
 - Python 3 + venv
 - Zsh interactive shell
 - runtime-adaptive user identity (no rebuild needed per developer)
 - container-aware shell prompt
 - designed for nerdctl + containerd (rootless)
 - also works with Docker (rootful), Podman (rootless), and Kubernetes
-- GitHub Actions for build verification and container publishing
-- Makefile for common build and run targets
+- GitHub Actions for build verification and container publishing (both variants)
+- Makefile for common build and run targets (both variants)
 
 ## Read Me First: Choosing the Right Mount Point
 
@@ -85,7 +101,7 @@ nerdctl run -it --rm \
   -e HOST_USER=$(whoami) \
   -v "$HOME/ada/github.com/abitofhelp":/home/$(whoami)/ada/github.com/abitofhelp \
   -w /home/$(whoami)/ada/github.com/abitofhelp/my_app \
-  dev-container-ada
+  dev-container-ada           # or dev-container-ada-system
 ```
 
 If your project uses only published Alire crates (no pins), the simple
@@ -95,23 +111,35 @@ If your project uses only published Alire crates (no pins), the simple
 
 ## Quick Start
 
-### Pull the pre-built image
+### Pull a pre-built image
 
 ```bash
+# Default (Alire-managed toolchain)
 nerdctl pull ghcr.io/abitofhelp/dev-container-ada:latest
+
+# System toolchain alternative
+nerdctl pull ghcr.io/abitofhelp/dev-container-ada-system:latest
 ```
 
 ### Build from source
 
 ```bash
+# Default (Alire-managed toolchain)
 make build
+
+# System toolchain alternative
+make build-system
 ```
 
 ### Run
 
 ```bash
+# Default
 cd ~/projects/my_ada_app
 make -f /path/to/dev_container_ada/Makefile run
+
+# System toolchain alternative
+make -f /path/to/dev_container_ada/Makefile run-system
 ```
 
 The current directory is mounted into the container at `/workspace`. The
@@ -127,12 +155,17 @@ make inspect
 ## Manual Build
 
 ```bash
+# Default (Alire-managed toolchain)
 nerdctl build -t dev-container-ada .
+
+# System toolchain alternative
+nerdctl build -f Dockerfile.system -t dev-container-ada-system .
 ```
 
 ## Manual Run
 
 ```bash
+# Default (Alire-managed toolchain)
 nerdctl run -it --rm \
   -e HOST_UID=$(id -u) \
   -e HOST_GID=$(id -g) \
@@ -140,9 +173,22 @@ nerdctl run -it --rm \
   -v "$(pwd)":/workspace \
   -w /workspace \
   dev-container-ada
+
+# System toolchain alternative
+nerdctl run -it --rm \
+  -e HOST_UID=$(id -u) \
+  -e HOST_GID=$(id -g) \
+  -e HOST_USER=$(whoami) \
+  -v "$(pwd)":/workspace \
+  -w /workspace \
+  dev-container-ada-system
 ```
 
 ## Override Toolchain Versions
+
+> **Note**: Toolchain version overrides apply only to the default Alire-managed
+> image (`Dockerfile`). The system toolchain image uses whichever GNAT and
+> GPRBuild versions Ubuntu 24.04 provides.
 
 ```bash
 make build GNAT_VERSION=15.2.1 GPRBUILD_VERSION=25.0.1
@@ -269,9 +315,9 @@ bind-mounted host files.
 | Podman rootless  | Host user (safe)       | --userns=keep-id          | User namespace         |
 | Kubernetes       | Blocked by policy      | fsGroup in pod spec       | Pod security standards |
 
-## Version Tags Based on GNAT Versions
+## Version Tags
 
-Suggested container tags:
+### Default image (Alire-managed toolchain)
 
 ```text
 ghcr.io/abitofhelp/dev-container-ada:latest
@@ -279,15 +325,25 @@ ghcr.io/abitofhelp/dev-container-ada:gnat-15.2.1
 ghcr.io/abitofhelp/dev-container-ada:gnat-15.2.1-gprbuild-25.0.1
 ```
 
-The included publish workflow automatically creates tags in this style.
+### System toolchain image
+
+```text
+ghcr.io/abitofhelp/dev-container-ada-system:latest
+ghcr.io/abitofhelp/dev-container-ada-system:system-gnat-13
+```
+
+The included publish workflow automatically creates tags in these styles.
 
 ## GitHub Actions
 
 This repository includes:
 
-- `docker-build.yml` to verify the Dockerfile on every push and pull request
-- `docker-publish.yml` to publish images to GitHub Container Registry
+- `docker-build.yml` to verify both Dockerfiles on every push and pull request
+  (matrix build: Alire + system variants)
+- `docker-publish.yml` to publish both images to GitHub Container Registry
+  (two jobs: `publish-alire` + `publish-system`)
 - automatic tagging based on toolchain versions
+- all actions pinned by SHA digest for supply-chain security
 
 ## Repository Layout
 
@@ -301,7 +357,8 @@ dev_container_ada/
 ├── .gitignore
 ├── .zshrc
 ├── CHANGELOG.md
-├── Dockerfile
+├── Dockerfile              ← Alire-managed toolchain (Ubuntu 22.04)
+├── Dockerfile.system       ← system toolchain (Ubuntu 24.04)
 ├── entrypoint.sh
 ├── examples/
 │   └── hello_ada/
