@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # ============================================================================
 # Dockerfile — Alire-managed toolchain (default)
 # ============================================================================
@@ -39,6 +40,7 @@
 # - Dockerfile
 # - .dockerignore
 # - .zshrc
+# - entrypoint.sh
 #
 # Default toolchain versions:
 # - GNAT_VERSION=15.2.1
@@ -79,8 +81,6 @@
 #   GNAT toolchain.
 #
 # ============================================================================
-
-# syntax=docker/dockerfile:1.7
 # Pinned by digest for reproducibility. Update periodically:
 #   nerdctl pull ubuntu:22.04
 #   nerdctl image inspect ubuntu:22.04 | grep -A1 RepoDigests

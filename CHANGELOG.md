@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-03-08
+
+### Fixed
+
+- Moved `# syntax=docker/dockerfile:1.7` to line 1 in both Dockerfiles so
+  BuildKit actually uses the specified frontend.
+- Added `entrypoint.sh` to "Files expected in the build context" header comment
+  in both Dockerfiles.
+- Removed orphan `examples/hello_ada/hello_ada.adb`; added copyright header to
+  the actual source at `src/hello_ada.adb` and fixed GNAT comment style.
+- Reject `HOST_USER=root` and `HOST_UID=0` in `entrypoint.sh` to prevent
+  accidental modification of the container's root account.
+- Added logging to `fixup_symlinks()` so relinked toolchain paths are visible.
+- Fixed `alire.toml` author, maintainer, login, website, and "tdb" typo.
+- Fixed USER_GUIDE version from 2.1 to 2.0.0.
+
+### Added
+
+- Makefile targets `test-system`, `test-docker-system`, `test-podman-system`
+  with `TEST_SCRIPT_SYSTEM` for system-image testing.
+- `make -f` usage note in README explaining `CURDIR` bind-mount behavior.
+
+### Changed
+
+- Unified CI build steps into a single matrix-driven step with `build_args`,
+  `compile_cmd`, `gnat_cmd`, and `gprbuild_cmd` parameters.
+- CI smoke test now matches Makefile test scripts (environment info, direct
+  gprbuild for system variant, toolchain versions).
+
 ## [2.0.0] - 2026-03-08
 
 ### Added

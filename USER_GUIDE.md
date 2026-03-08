@@ -8,7 +8,7 @@
 
 # User Guide: dev_container_ada
 
-**Version**: 2.1 (dual-Dockerfile)
+**Version**: 2.0.0 (dual-Dockerfile)
 **Date**: 2026-03-07
 **Authors**: Michael Gardner, Claude (Anthropic), GPT (OpenAI)
 
@@ -778,9 +778,9 @@ release. Remove or update entries as they are verified.
 | Area                              | Status       | Notes                                                        |
 |-----------------------------------|--------------|--------------------------------------------------------------|
 | Rootless nerdctl (local)          | Verified     | Ubuntu 22.04 base, nerdctl 2.2.1. Build + smoke test passed.|
-| Docker rootful (macOS)            | Not tested   | Needs retest after Ubuntu 22.04 base change. Test on macOS host. |
-| GitHub Actions build workflow     | Not tested   | Needs CI run with matrix build.                              |
-| GitHub Actions publish workflow   | Not tested   | Needs CI run with two-job publish.                           |
+| Docker rootful (macOS)            | Verified     | macOS host, Docker 29.2.1. User adaptation and smoke test passed. |
+| GitHub Actions build workflow     | Verified     | v2.0.0 CI run passed (both matrix entries).                  |
+| GitHub Actions publish workflow   | Verified     | v2.0.0 publish pushed both images to GHCR.                  |
 | Podman rootless (local)           | Blocked      | `--userns=keep-id` fails in Parallels VM (kernel restriction). |
 | Kubernetes deployment             | Not tested   | Image is designed to be compatible; no cluster available.    |
 
@@ -789,9 +789,9 @@ release. Remove or update entries as they are verified.
 | Area                              | Status       | Notes                                                        |
 |-----------------------------------|--------------|--------------------------------------------------------------|
 | Rootless nerdctl (local)          | Verified     | Ubuntu 24.04 base, gnat-13, nerdctl 2.2.1. Build + smoke test passed. |
-| Docker rootful (macOS)            | Not tested   | New image — test on macOS host.                              |
-| GitHub Actions build workflow     | Not tested   | Needs CI run with matrix build.                              |
-| GitHub Actions publish workflow   | Not tested   | Needs CI run with two-job publish.                           |
+| Docker rootful (macOS)            | Verified     | macOS host, Docker 29.2.1. User adaptation and smoke test passed. |
+| GitHub Actions build workflow     | Verified     | v2.0.0 CI run passed (both matrix entries).                  |
+| GitHub Actions publish workflow   | Verified     | v2.0.0 publish pushed both images to GHCR.                  |
 | Podman rootless (local)           | Blocked      | `--userns=keep-id` fails in Parallels VM (kernel restriction). |
 | Kubernetes deployment             | Not tested   | Image is designed to be compatible; no cluster available.    |
 
