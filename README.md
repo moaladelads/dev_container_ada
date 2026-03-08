@@ -8,6 +8,9 @@
 
 Professional Ada development container using **Alire**, **GNAT**, and **GPRBuild**.
 
+**Supported architectures**: `linux/amd64` (x86_64) and `linux/arm64` (Apple Silicon).
+Docker automatically pulls the correct image for your platform.
+
 ## Image Names
 
 ```text
@@ -52,6 +55,7 @@ parallels@container /workspace (main) [ctr:rootless]
 
 ## Features
 
+- Multi-architecture support: `linux/amd64` and `linux/arm64` (native Apple Silicon)
 - Two Dockerfile variants: Alire-managed toolchain (Ubuntu 22.04) and system
   toolchain (Ubuntu 24.04)
 - Alire package manager

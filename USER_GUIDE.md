@@ -8,8 +8,8 @@
 
 # User Guide: dev_container_ada
 
-**Version**: 2.0.0 (dual-Dockerfile)
-**Date**: 2026-03-07
+**Version**: 2.1.0 (multi-architecture)
+**Date**: 2026-03-08
 **Authors**: Michael Gardner, Claude (Anthropic), GPT (OpenAI)
 
 ---
@@ -39,7 +39,16 @@ including the ability to install cross compilers for embedded targets. Switch
 to `Dockerfile.system` if you prefer system packages and only need native
 compilation.
 
-### 0.2 What stays the same
+### 0.2 Supported architectures
+
+Both images are published as multi-architecture manifests for `linux/amd64`
+(x86_64) and `linux/arm64` (aarch64 / Apple Silicon). When you pull an image,
+Docker selects the native variant for your platform automatically.
+
+On Apple Silicon Macs, the `arm64` image runs natively — no Rosetta 2
+emulation overhead.
+
+### 0.3 What stays the same
 
 Regardless of which Dockerfile you choose:
 
@@ -50,7 +59,7 @@ Regardless of which Dockerfile you choose:
 - All three deployment environments (rootless nerdctl, rootful Docker,
   Kubernetes) are supported.
 
-### 0.3 Cross-target and embedded development
+### 0.4 Cross-target and embedded development
 
 If you need Alire-managed cross compilers (e.g., `gnat_arm_elf` for
 bare-metal ARM, `gnat_riscv64_elf` for RISC-V), use the default
@@ -720,16 +729,22 @@ Rebuild and test the affected image after updating.
 
 1. Check the latest release at
    `https://github.com/alire-project/alire/releases`.
-2. Download the new `alr-<version>-bin-x86_64-linux.zip` and compute its
-   checksum:
+2. Download both architecture binaries and compute their checksums:
 
    ```bash
-   curl -sL -o /tmp/alr.zip \
+   # amd64
+   curl -sL -o /tmp/alr-amd64.zip \
      https://github.com/alire-project/alire/releases/download/v<version>/alr-<version>-bin-x86_64-linux.zip
-   sha256sum /tmp/alr.zip
+   sha256sum /tmp/alr-amd64.zip
+
+   # arm64
+   curl -sL -o /tmp/alr-arm64.zip \
+     https://github.com/alire-project/alire/releases/download/v<version>/alr-<version>-bin-aarch64-linux.zip
+   sha256sum /tmp/alr-arm64.zip
    ```
 
-3. Update `ALIRE_VERSION`, `ALIRE_ZIP`, and `ALIRE_SHA256` in the Dockerfile.
+3. Update `ALIRE_VERSION`, `ALIRE_SHA256_AMD64`, and `ALIRE_SHA256_ARM64` in
+   both Dockerfiles.
 4. Rebuild and verify that `alr version` reports the expected release.
 
 ### 15.3 GNAT and GPRBuild

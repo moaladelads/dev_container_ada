@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-03-08
+
+### Added
+
+- Multi-architecture support: both images now build for `linux/amd64` and
+  `linux/arm64` (Apple Silicon). Docker pulls the native variant automatically.
+- QEMU setup in CI workflows for cross-platform builds.
+- Per-architecture Alire checksums (`ALIRE_SHA256_AMD64`, `ALIRE_SHA256_ARM64`)
+  in both Dockerfiles with dynamic binary selection via `uname -m`.
+- USER_GUIDE §0.2 "Supported architectures" section.
+
+### Changed
+
+- `docker-build.yml` now uses `docker buildx build --platform linux/amd64,linux/arm64`
+  instead of plain `docker build`. The smoke test loads the amd64 image only
+  (GitHub Actions runners are amd64).
+- `docker-publish.yml` adds `platforms: linux/amd64,linux/arm64` to both
+  `docker/build-push-action` steps, producing multi-arch manifests on GHCR.
+- Replaced `ALIRE_SHA256` and `ALIRE_ZIP` build args with `ALIRE_SHA256_AMD64`
+  and `ALIRE_SHA256_ARM64`; the Alire install step selects the correct binary
+  at build time.
+- USER_GUIDE §15.2 updated to document checksums for both architectures.
+
 ## [2.0.1] - 2026-03-08
 
 ### Fixed

@@ -34,6 +34,8 @@
 #   • Python 3 + venv
 #   • Zsh interactive shell
 #
+# Supported architectures: linux/amd64, linux/arm64 (Apple Silicon).
+#
 # Designed for nerdctl + containerd (rootless).
 #
 # Files expected in the build context:
@@ -89,9 +91,9 @@ FROM ubuntu:22.04@sha256:3ba65aa20f86a0fad9df2b2c259c613df006b2e6d0bfcc8a146afb8
 # ----------------------------------------------------------------------------
 # Build arguments (alphabetized)
 # ----------------------------------------------------------------------------
-ARG ALIRE_SHA256=e3b32cb0afe981b23d1a68da77452cf81ee1d82de8ebaf01c5e233be8b463fbe
+ARG ALIRE_SHA256_AMD64=e3b32cb0afe981b23d1a68da77452cf81ee1d82de8ebaf01c5e233be8b463fbe
+ARG ALIRE_SHA256_ARM64=5d4d711e2ae347532c931212b9aeca9eba1d9ab87d6d819c262bb2c5d423d363
 ARG ALIRE_VERSION=2.1.0
-ARG ALIRE_ZIP=alr-2.1.0-bin-x86_64-linux.zip
 ARG DEBIAN_FRONTEND=noninteractive
 ARG GNAT_VERSION=15.2.1
 ARG GPRBUILD_VERSION=25.0.1
@@ -188,7 +190,14 @@ COPY USER_GUIDE.md /usr/share/doc/dev-container-ada/USER_GUIDE.md
 # Install Alire
 # ----------------------------------------------------------------------------
 WORKDIR /tmp
-RUN wget -q "https://github.com/alire-project/alire/releases/download/v${ALIRE_VERSION}/${ALIRE_ZIP}" \
+RUN set -eux; \
+    case "$(uname -m)" in \
+      x86_64)  ALIRE_ARCH="x86_64"  ; ALIRE_SHA256="${ALIRE_SHA256_AMD64}" ;; \
+      aarch64) ALIRE_ARCH="aarch64" ; ALIRE_SHA256="${ALIRE_SHA256_ARM64}" ;; \
+      *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
+    esac; \
+    ALIRE_ZIP="alr-${ALIRE_VERSION}-bin-${ALIRE_ARCH}-linux.zip"; \
+    wget -q "https://github.com/alire-project/alire/releases/download/v${ALIRE_VERSION}/${ALIRE_ZIP}" \
  && echo "${ALIRE_SHA256}  ${ALIRE_ZIP}" | sha256sum -c - \
  && unzip -q "${ALIRE_ZIP}" \
  && install -m 0755 bin/alr /usr/local/bin/alr \
