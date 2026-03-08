@@ -74,8 +74,11 @@ help:
 	@echo "  tag-gnat             Tag local image with GNAT version"
 	@echo "  tag-latest           Tag local image as latest"
 	@echo "  test                 Build and run hello_ada example (nerdctl rootless)"
+	@echo "  test-system          Build and run hello_ada example with system image (nerdctl rootless)"
 	@echo "  test-docker          Build and run hello_ada example (docker rootful)"
+	@echo "  test-docker-system   Build and run hello_ada example with system image (docker rootful)"
 	@echo "  test-podman          Build and run hello_ada example (podman rootless)"
+	@echo "  test-podman-system   Build and run hello_ada example with system image (podman rootless)"
 	@echo "  clean                Remove build artifacts (dist/, archives)"
 	@echo "  compress             Create a compressed source archive from HEAD"
 	@echo "  docker-build         Build with docker instead of nerdctl"
@@ -189,6 +192,27 @@ echo "=== Test passed ==="
 endef
 export TEST_SCRIPT
 
+define TEST_SCRIPT_SYSTEM
+set -e
+echo "=== Environment ==="
+echo "USER=$$(whoami) UID=$$(id -u) GID=$$(id -g) HOME=$$HOME"
+echo "DISPLAY_USER=$$DISPLAY_USER"
+echo "CONTAINER_RUNTIME=$$CONTAINER_RUNTIME"
+echo ""
+echo "=== Compile test ==="
+gprbuild -P hello_ada.gpr -j0
+echo ""
+echo "=== Run test ==="
+bin/hello_ada
+echo ""
+echo "=== Toolchain versions ==="
+gnat --version | head -1
+gprbuild --version | head -1
+alr --version | head -1
+echo "=== Test passed ==="
+endef
+export TEST_SCRIPT_SYSTEM
+
 .PHONY: test
 test:
 	$(CONTAINER_CLI) run --rm \
@@ -199,6 +223,17 @@ test:
 		-w /workspace/$(EXAMPLE_DIR) \
 		$(IMAGE_NAME) \
 		bash -c "$$TEST_SCRIPT"
+
+.PHONY: test-system
+test-system:
+	$(CONTAINER_CLI) run --rm \
+		-e HOST_UID=$(HOST_UID) \
+		-e HOST_GID=$(HOST_GID) \
+		-e HOST_USER=$(HOST_USER) \
+		-v "$(CURDIR)":/workspace \
+		-w /workspace/$(EXAMPLE_DIR) \
+		$(SYSTEM_IMAGE_NAME) \
+		bash -c "$$TEST_SCRIPT_SYSTEM"
 
 .PHONY: test-docker
 test-docker:
@@ -211,6 +246,17 @@ test-docker:
 		$(IMAGE_NAME) \
 		bash -c "$$TEST_SCRIPT"
 
+.PHONY: test-docker-system
+test-docker-system:
+	docker run --rm \
+		-e HOST_UID=$(HOST_UID) \
+		-e HOST_GID=$(HOST_GID) \
+		-e HOST_USER=$(HOST_USER) \
+		-v "$(CURDIR)":/workspace \
+		-w /workspace/$(EXAMPLE_DIR) \
+		$(SYSTEM_IMAGE_NAME) \
+		bash -c "$$TEST_SCRIPT_SYSTEM"
+
 .PHONY: test-podman
 test-podman:
 	podman run --rm \
@@ -219,6 +265,15 @@ test-podman:
 		-w /workspace/$(EXAMPLE_DIR) \
 		$(IMAGE_NAME) \
 		bash -c "$$TEST_SCRIPT"
+
+.PHONY: test-podman-system
+test-podman-system:
+	podman run --rm \
+		--userns=keep-id \
+		-v "$(CURDIR)":/workspace \
+		-w /workspace/$(EXAMPLE_DIR) \
+		$(SYSTEM_IMAGE_NAME) \
+		bash -c "$$TEST_SCRIPT_SYSTEM"
 
 # ----------------------------------------------------------------------------
 # Docker convenience aliases

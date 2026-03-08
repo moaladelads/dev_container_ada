@@ -24,30 +24,27 @@ jobs:
           - name: "alire"
             dockerfile: "Dockerfile"
             image_name: "dev-container-ada"
-            gnat_version: "15.2.1"
-            gprbuild_version: "25.0.1"
+            build_args: "--build-arg GNAT_VERSION=15.2.1 --build-arg GPRBUILD_VERSION=25.0.1"
+            compile_cmd: "alr exec -- gprbuild -P hello_ada.gpr -j0"
+            gnat_cmd: "alr exec -- gnat --version | head -1"
+            gprbuild_cmd: "alr exec -- gprbuild --version | head -1"
           - name: "system"
             dockerfile: "Dockerfile.system"
             image_name: "dev-container-ada-system"
+            build_args: ""
+            compile_cmd: "gprbuild -P hello_ada.gpr -j0"
+            gnat_cmd: "gnat --version | head -1"
+            gprbuild_cmd: "gprbuild --version | head -1"
 
     steps:
       - name: Check out repository
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - name: Build container image (Alire toolchain)
-        if: matrix.name == 'alire'
+      - name: Build container image (${{ matrix.name }})
         run: |
           docker build \
             -f ${{ matrix.dockerfile }} \
-            --build-arg GNAT_VERSION=${{ matrix.gnat_version }} \
-            --build-arg GPRBUILD_VERSION=${{ matrix.gprbuild_version }} \
-            -t ${{ matrix.image_name }}:ci .
-
-      - name: Build container image (system toolchain)
-        if: matrix.name == 'system'
-        run: |
-          docker build \
-            -f ${{ matrix.dockerfile }} \
+            ${{ matrix.build_args }} \
             -t ${{ matrix.image_name }}:ci .
 
       - name: Smoke test
@@ -61,15 +58,20 @@ jobs:
             ${{ matrix.image_name }}:ci \
             bash -c '
               set -e
-              echo "=== Smoke test ==="
-              alr version
-              gprbuild --version
-              gnat --version
-              id
-              echo "HOME=$HOME"
+              echo "=== Environment ==="
+              echo "USER=$(whoami) UID=$(id -u) GID=$(id -g) HOME=$HOME"
+              echo "DISPLAY_USER=$DISPLAY_USER"
+              echo "CONTAINER_RUNTIME=$CONTAINER_RUNTIME"
               echo ""
               echo "=== Compile test ==="
-              alr build
+              ${{ matrix.compile_cmd }}
+              echo ""
+              echo "=== Run test ==="
               bin/hello_ada
+              echo ""
+              echo "=== Toolchain versions ==="
+              ${{ matrix.gnat_cmd }}
+              ${{ matrix.gprbuild_cmd }}
+              alr --version | head -1
               echo "=== Smoke test passed ==="
             '

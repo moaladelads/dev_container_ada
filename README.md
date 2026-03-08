@@ -142,6 +142,10 @@ make -f /path/to/dev_container_ada/Makefile run
 make -f /path/to/dev_container_ada/Makefile run-system
 ```
 
+> **Note**: When using `make -f`, the Makefile mounts the caller's current
+> directory (not the Makefile's directory) into the container. This is
+> intentional — it bind-mounts your project, not the container repository.
+
 The current directory is mounted into the container at `/workspace`. The
 entrypoint adapts the container's home directory layout and toolchain access
 to match your host user, so bind-mounted files are readable and writable.

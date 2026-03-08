@@ -101,12 +101,20 @@ validate_inputs() {
         log_error "HOST_UID '${HOST_UID}' is not a valid numeric UID."
         return 1
     fi
+    if [ "$HOST_UID" = "0" ]; then
+        log_error "HOST_UID=0 is not allowed. The container's root account must not be modified."
+        return 1
+    fi
     if ! [[ "$HOST_GID" =~ ^[0-9]+$ ]]; then
         log_error "HOST_GID '${HOST_GID}' is not a valid numeric GID."
         return 1
     fi
     if ! [[ "$HOST_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
         log_error "HOST_USER '${HOST_USER}' is not a valid username."
+        return 1
+    fi
+    if [ "$HOST_USER" = "root" ]; then
+        log_error "HOST_USER=root is not allowed. The container's root account must not be modified."
         return 1
     fi
 }
@@ -213,6 +221,7 @@ fixup_symlinks() {
     if [ "${TARGET_HOME}" = "${FALLBACK_HOME}" ]; then
         return 0
     fi
+    local count=0
     for link in /usr/local/bin/*; do
         if [ -L "$link" ]; then
             local target
@@ -222,11 +231,15 @@ fixup_symlinks() {
                     local new_target="${TARGET_HOME}${target#${FALLBACK_HOME}}"
                     if [ -e "$new_target" ]; then
                         ln -sf "$new_target" "$link"
+                        count=$((count + 1))
                     fi
                     ;;
             esac
         fi
     done
+    if [ "$count" -gt 0 ]; then
+        log_info "Relinked ${count} toolchain symlink(s) to ${TARGET_HOME}."
+    fi
 }
 
 # ----------------------------------------------------------------------------

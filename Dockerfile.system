@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # ============================================================================
 # Dockerfile.system — Ubuntu system toolchain (alternate)
 # ============================================================================
@@ -39,6 +40,7 @@
 # - Dockerfile.system
 # - .dockerignore
 # - .zshrc
+# - entrypoint.sh
 #
 # Build example:
 # nerdctl build -f Dockerfile.system -t dev-container-ada-system .
@@ -68,8 +70,6 @@
 #   toolchain selection step is needed.
 #
 # ============================================================================
-
-# syntax=docker/dockerfile:1.7
 # Pinned by digest for reproducibility. Update periodically:
 #   nerdctl pull ubuntu:24.04
 #   nerdctl image inspect ubuntu:24.04 | grep -A1 RepoDigests
