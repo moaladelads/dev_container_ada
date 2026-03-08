@@ -57,6 +57,7 @@ CONTAINER_CLI    ?= nerdctl
 .PHONY: help
 help:
 	@echo "Alire-managed image (Dockerfile, amd64 only):"
+	@echo "  pull                 Pull the default image from GHCR"
 	@echo "  build                Build the default image"
 	@echo "  build-no-cache       Build the default image without cache"
 	@echo "  run                  Run the default image interactively"
@@ -71,6 +72,7 @@ help:
 	@echo "  tag-latest           Tag local image as latest"
 	@echo ""
 	@echo "System-toolchain image (Dockerfile.system, amd64 + arm64):"
+	@echo "  pull-system          Pull the system image from GHCR"
 	@echo "  build-system         Build the system-toolchain image"
 	@echo "  build-system-no-cache Build the system-toolchain image without cache"
 	@echo "  run-system           Run the system-toolchain image interactively"
@@ -108,6 +110,19 @@ help:
 	@echo "  HOST_GID             Host group ID (default: $$(id -g))"
 	@echo "  GNAT_VERSION         GNAT version for Alire build (default: 15.2.1)"
 	@echo "  GPRBUILD_VERSION     GPRBuild version for Alire build (default: 25.0.1)"
+
+# ----------------------------------------------------------------------------
+# Pull targets (pull from GHCR and tag for local use)
+# ----------------------------------------------------------------------------
+.PHONY: pull
+pull:
+	$(CONTAINER_CLI) pull $(IMAGE_REF):latest
+	$(CONTAINER_CLI) tag $(IMAGE_REF):latest $(IMAGE_NAME):latest
+
+.PHONY: pull-system
+pull-system:
+	$(CONTAINER_CLI) pull $(SYSTEM_IMAGE_REF):latest
+	$(CONTAINER_CLI) tag $(SYSTEM_IMAGE_REF):latest $(SYSTEM_IMAGE_NAME):latest
 
 # ----------------------------------------------------------------------------
 # Build targets
