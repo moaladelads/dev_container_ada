@@ -34,6 +34,7 @@ IMAGE_NAME       ?= dev-container-ada
 SYSTEM_IMAGE_NAME ?= $(IMAGE_NAME)-system
 IMAGE_REGISTRY   ?= ghcr.io/abitofhelp
 IMAGE_REF        ?= $(IMAGE_REGISTRY)/$(IMAGE_NAME)
+SYSTEM_IMAGE_REF ?= $(IMAGE_REGISTRY)/$(SYSTEM_IMAGE_NAME)
 
 # ----------------------------------------------------------------------------
 # Toolchain versions (build-time)
@@ -55,40 +56,50 @@ CONTAINER_CLI    ?= nerdctl
 
 .PHONY: help
 help:
-	@echo "Targets (default — Alire toolchain, Dockerfile):"
+	@echo "Alire-managed image (Dockerfile, amd64 only):"
 	@echo "  build                Build the default image"
 	@echo "  build-no-cache       Build the default image without cache"
 	@echo "  run                  Run the default image interactively"
-	@echo ""
-	@echo "Targets (system toolchain, Dockerfile.system):"
-	@echo "  build-system         Build the system-toolchain image"
-	@echo "  build-system-no-cache Build the system-toolchain image without cache"
-	@echo "  run-system           Run the system-toolchain image interactively"
-	@echo ""
-	@echo "Targets (general):"
-	@echo "  run-root             Run the image as root, bypassing the entrypoint (diagnostic)"
-	@echo "  run-shell            Run the image and open zsh in the user home directory"
-	@echo "  inspect              Show configured image and runtime settings"
+	@echo "  run-root             Run as root, bypassing the entrypoint (diagnostic)"
+	@echo "  run-shell            Open zsh in the user home directory"
+	@echo "  test                 Smoke test (nerdctl rootless)"
+	@echo "  test-docker          Smoke test (docker rootful)"
+	@echo "  test-podman          Smoke test (podman rootless)"
 	@echo "  save                 Save the image to dist/"
 	@echo "  show-tags            Show suggested tags"
 	@echo "  tag-gnat             Tag local image with GNAT version"
 	@echo "  tag-latest           Tag local image as latest"
-	@echo "  test                 Build and run hello_ada example (nerdctl rootless)"
-	@echo "  test-system          Build and run hello_ada example with system image (nerdctl rootless)"
-	@echo "  test-docker          Build and run hello_ada example (docker rootful)"
-	@echo "  test-docker-system   Build and run hello_ada example with system image (docker rootful)"
-	@echo "  test-podman          Build and run hello_ada example (podman rootless)"
-	@echo "  test-podman-system   Build and run hello_ada example with system image (podman rootless)"
-	@echo "  clean                Remove build artifacts (dist/, archives)"
-	@echo "  compress             Create a compressed source archive from HEAD"
+	@echo ""
+	@echo "System-toolchain image (Dockerfile.system, amd64 + arm64):"
+	@echo "  build-system         Build the system-toolchain image"
+	@echo "  build-system-no-cache Build the system-toolchain image without cache"
+	@echo "  run-system           Run the system-toolchain image interactively"
+	@echo "  run-root-system      Run as root, bypassing the entrypoint (diagnostic)"
+	@echo "  run-shell-system     Open zsh in the user home directory"
+	@echo "  test-system          Smoke test (nerdctl rootless)"
+	@echo "  test-docker-system   Smoke test (docker rootful)"
+	@echo "  test-podman-system   Smoke test (podman rootless)"
+	@echo "  save-system          Save the system image to dist/"
+	@echo "  show-tags-system     Show suggested tags"
+	@echo "  tag-system           Tag local image with system-gnat-13"
+	@echo "  tag-latest-system    Tag local image as latest"
+	@echo ""
+	@echo "Docker convenience aliases:"
 	@echo "  docker-build         Build the default image with docker"
 	@echo "  docker-build-system  Build the system image with docker"
 	@echo "  docker-run           Run the default image with docker"
 	@echo "  docker-run-system    Run the system image with docker"
+	@echo ""
+	@echo "Podman convenience aliases:"
 	@echo "  podman-build         Build the default image with podman"
 	@echo "  podman-build-system  Build the system image with podman"
-	@echo "  podman-run           Run the default image with podman (--userns=keep-id)"
-	@echo "  podman-run-system    Run the system image with podman (--userns=keep-id)"
+	@echo "  podman-run           Run with podman (--userns=keep-id)"
+	@echo "  podman-run-system    Run system image with podman (--userns=keep-id)"
+	@echo ""
+	@echo "General:"
+	@echo "  inspect              Show configured image and runtime settings"
+	@echo "  clean                Remove build artifacts (dist/, archives)"
+	@echo "  compress             Create a compressed source archive from HEAD"
 	@echo ""
 	@echo "Variables:"
 	@echo "  CONTAINER_CLI        Container CLI to use (default: nerdctl)"
@@ -168,6 +179,25 @@ run-system:
 		-e HOST_USER=$(HOST_USER) \
 		-v "$(CURDIR)":/workspace \
 		-w /workspace \
+		$(SYSTEM_IMAGE_NAME)
+
+.PHONY: run-root-system
+run-root-system:
+	$(CONTAINER_CLI) run -it --rm \
+		--entrypoint /usr/bin/zsh \
+		-u 0 \
+		-v "$(CURDIR)":/workspace \
+		-w /workspace \
+		$(SYSTEM_IMAGE_NAME)
+
+.PHONY: run-shell-system
+run-shell-system:
+	$(CONTAINER_CLI) run -it --rm \
+		-e HOST_UID=$(HOST_UID) \
+		-e HOST_GID=$(HOST_GID) \
+		-e HOST_USER=$(HOST_USER) \
+		-v "$(CURDIR)":/workspace \
+		-w /home/$(HOST_USER) \
 		$(SYSTEM_IMAGE_NAME)
 
 # ----------------------------------------------------------------------------
@@ -337,6 +367,7 @@ inspect:
 	@echo "IMAGE_NAME         = $(IMAGE_NAME)"
 	@echo "SYSTEM_IMAGE_NAME  = $(SYSTEM_IMAGE_NAME)"
 	@echo "IMAGE_REF          = $(IMAGE_REF)"
+	@echo "SYSTEM_IMAGE_REF   = $(SYSTEM_IMAGE_REF)"
 	@echo "CONTAINER_CLI      = $(CONTAINER_CLI)"
 	@echo "GNAT_VERSION       = $(GNAT_VERSION)"
 	@echo "GPRBUILD_VERSION   = $(GPRBUILD_VERSION)"
@@ -344,6 +375,9 @@ inspect:
 	@echo "HOST_UID           = $(HOST_UID)"
 	@echo "HOST_GID           = $(HOST_GID)"
 
+# ----------------------------------------------------------------------------
+# Image management (default image)
+# ----------------------------------------------------------------------------
 .PHONY: save
 save:
 	mkdir -p dist
@@ -363,6 +397,27 @@ tag-gnat:
 .PHONY: tag-latest
 tag-latest:
 	$(CONTAINER_CLI) tag $(IMAGE_NAME) $(IMAGE_REF):latest
+
+# ----------------------------------------------------------------------------
+# Image management (system image)
+# ----------------------------------------------------------------------------
+.PHONY: save-system
+save-system:
+	mkdir -p dist
+	$(CONTAINER_CLI) save -o dist/$(SYSTEM_IMAGE_NAME)-system-gnat-13.tar $(SYSTEM_IMAGE_NAME)
+
+.PHONY: show-tags-system
+show-tags-system:
+	@echo "$(SYSTEM_IMAGE_REF):latest"
+	@echo "$(SYSTEM_IMAGE_REF):system-gnat-13"
+
+.PHONY: tag-system
+tag-system:
+	$(CONTAINER_CLI) tag $(SYSTEM_IMAGE_NAME) $(SYSTEM_IMAGE_REF):system-gnat-13
+
+.PHONY: tag-latest-system
+tag-latest-system:
+	$(CONTAINER_CLI) tag $(SYSTEM_IMAGE_NAME) $(SYSTEM_IMAGE_REF):latest
 
 # ----------------------------------------------------------------------------
 # Cleanup
