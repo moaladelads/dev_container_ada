@@ -15,11 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - QEMU setup in CI workflows for cross-platform builds of the system image.
 - Per-architecture Alire checksums (`ALIRE_SHA256_AMD64`, `ALIRE_SHA256_ARM64`)
   in `Dockerfile.system` with dynamic binary selection via `uname -m`.
-- Architecture support table in README and USER_GUIDE §0.2.
-- Makefile convenience aliases: `docker-build-system`, `docker-run-system`,
-  `podman-build-system`, `podman-run-system`.
+- Architecture compatibility table and verified test matrix in README.
 - USER_GUIDE §0.2 "Supported architectures" section documenting why the
   Alire-managed image is amd64-only.
+- Makefile system image parity: `run-root-system`, `run-shell-system`,
+  `save-system`, `show-tags-system`, `tag-system`, `tag-latest-system`.
+- Makefile convenience aliases: `docker-build-system`, `docker-run-system`,
+  `podman-build-system`, `podman-run-system`.
 
 ### Changed
 
@@ -27,10 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   support: amd64-only for the Alire image, amd64+arm64 for the system image.
 - `docker-publish.yml` adds `platforms: linux/amd64,linux/arm64` to the
   system image job, producing a multi-arch manifest on GHCR.
+- Makefile help text reorganized into clear groups (Alire image, system image,
+  Docker aliases, Podman aliases, general) with architecture info visible.
 - USER_GUIDE §15.2 updated to document per-Dockerfile Alire upgrade steps.
-
-### Not changed
-
 - The Alire-managed image (`Dockerfile`) remains `linux/amd64` only. Alire
   2.1.0's aarch64 binary requires glibc 2.38 (Ubuntu 22.04 ships 2.35), and
   Alire does not distribute pre-built `gnat_native` toolchains for
