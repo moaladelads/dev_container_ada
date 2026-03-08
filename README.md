@@ -10,14 +10,14 @@ Professional Ada development container using **Alire**, **GNAT**, and **GPRBuild
 
 ## Supported Architectures
 
-| Image | `linux/amd64` | `linux/arm64` | Notes |
-|-------|:---:|:---:|-------|
-| `dev-container-ada` | Yes | No | Alire does not distribute `alr` or `gnat_native` binaries for aarch64 that are compatible with Ubuntu 22.04. |
-| `dev-container-ada-system` | Yes | Yes | All components (GNAT, GPRBuild, Alire) are available for both architectures on Ubuntu 24.04. |
+| Image | Base | glibc | `alr` binary (amd64) | `alr` binary (arm64) | GNAT toolchain (amd64) | GNAT toolchain (arm64) |
+|-------|------|-------|----------------------|----------------------|------------------------|------------------------|
+| `Dockerfile` | Ubuntu 22.04 | 2.35 | Pre-built, works | Pre-built, fails (needs glibc 2.38) | Alire-managed, works | Not available from Alire |
+| `Dockerfile.system` | Ubuntu 24.04 | 2.39 | Pre-built, works | Pre-built, works | `apt install gnat-13`, works | `apt install gnat-13`, works |
 
 Apple Silicon users should use the **system toolchain image** (`Dockerfile.system`)
 for native arm64 performance. The Alire-managed image runs on Apple Silicon via
-Rosetta 2 emulation.
+Rosetta 2 emulation. See USER_GUIDE §0.2 for details.
 
 ## Image Names
 

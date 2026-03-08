@@ -41,17 +41,34 @@ compilation.
 
 ### 0.2 Supported architectures
 
-| Image | `linux/amd64` | `linux/arm64` | Notes |
-|-------|:---:|:---:|-------|
-| `dev-container-ada` | Yes | No | The Alire 2.1.0 aarch64 binary requires glibc 2.38 (Ubuntu 22.04 ships 2.35), and Alire does not distribute pre-built `gnat_native` toolchains for aarch64-linux. |
-| `dev-container-ada-system` | Yes | Yes | All components (GNAT, GPRBuild, Alire) are available for both architectures on Ubuntu 24.04. |
+#### Architecture compatibility
 
-The system toolchain image is published as a multi-architecture manifest.
-Docker selects the native variant for your platform automatically.
+| Image | Base | glibc | `alr` binary (amd64) | `alr` binary (arm64) | GNAT toolchain (amd64) | GNAT toolchain (arm64) |
+|-------|------|-------|----------------------|----------------------|------------------------|------------------------|
+| `Dockerfile` | Ubuntu 22.04 | 2.35 | Pre-built, works | Pre-built, fails (needs glibc 2.38) | Alire-managed, works | Not available from Alire |
+| `Dockerfile.system` | Ubuntu 24.04 | 2.39 | Pre-built, works | Pre-built, works | `apt install gnat-13`, works | `apt install gnat-13`, works |
 
-On Apple Silicon Macs, the system toolchain image (`Dockerfile.system`) runs
-natively with no Rosetta 2 emulation overhead. The Alire-managed image runs
-on Apple Silicon via Rosetta 2.
+The Alire-managed image (`Dockerfile`) is **amd64-only** for two reasons:
+
+1. The Alire 2.1.0 aarch64 binary was compiled against glibc 2.38, but
+   Ubuntu 22.04 ships glibc 2.35.
+2. Alire does not distribute pre-built `gnat_native` toolchains for
+   aarch64-linux (only a community port exists).
+
+The system toolchain image (`Dockerfile.system`) is published as a
+multi-architecture manifest for `linux/amd64` and `linux/arm64`. Docker
+selects the native variant for your platform automatically.
+
+On Apple Silicon Macs, the system toolchain image runs natively with no
+Rosetta 2 emulation overhead. The Alire-managed image runs on Apple Silicon
+via Rosetta 2.
+
+#### Verified test matrix
+
+| Image | Ubuntu VM (amd64) | macOS Intel (amd64) | MacBook Pro (arm64) |
+|-------|:---:|:---:|:---:|
+| `dev-container-ada` | Passed | Passed | N/A (amd64 only) |
+| `dev-container-ada-system` | Passed | Passed | Passed |
 
 ### 0.3 What stays the same
 
