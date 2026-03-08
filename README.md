@@ -17,7 +17,14 @@ Professional Ada development container using **Alire**, **GNAT**, and **GPRBuild
 
 Apple Silicon users should use the **system toolchain image** (`Dockerfile.system`)
 for native arm64 performance. The Alire-managed image runs on Apple Silicon via
-Rosetta 2 emulation. See USER_GUIDE §0.2 for details.
+Rosetta 2 emulation.
+
+### Verified Test Matrix
+
+| Image | Ubuntu VM (amd64) | macOS Intel (amd64) | MacBook Pro (arm64) |
+|-------|:---:|:---:|:---:|
+| `dev-container-ada` | Passed | Passed | N/A (amd64 only) |
+| `dev-container-ada-system` | Passed | Passed | Passed |
 
 ## Image Names
 

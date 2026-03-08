@@ -41,34 +41,14 @@ compilation.
 
 ### 0.2 Supported architectures
 
-#### Architecture compatibility
+See the architecture compatibility table in
+[README.md](README.md#supported-architectures) for a full breakdown of
+`alr` binary and GNAT toolchain availability per architecture.
 
-| Image | Base | glibc | `alr` binary (amd64) | `alr` binary (arm64) | GNAT toolchain (amd64) | GNAT toolchain (arm64) |
-|-------|------|-------|----------------------|----------------------|------------------------|------------------------|
-| `Dockerfile` | Ubuntu 22.04 | 2.35 | Pre-built, works | Pre-built, fails (needs glibc 2.38) | Alire-managed, works | Not available from Alire |
-| `Dockerfile.system` | Ubuntu 24.04 | 2.39 | Pre-built, works | Pre-built, works | `apt install gnat-13`, works | `apt install gnat-13`, works |
-
-The Alire-managed image (`Dockerfile`) is **amd64-only** for two reasons:
-
-1. The Alire 2.1.0 aarch64 binary was compiled against glibc 2.38, but
-   Ubuntu 22.04 ships glibc 2.35.
-2. Alire does not distribute pre-built `gnat_native` toolchains for
-   aarch64-linux (only a community port exists).
-
-The system toolchain image (`Dockerfile.system`) is published as a
-multi-architecture manifest for `linux/amd64` and `linux/arm64`. Docker
-selects the native variant for your platform automatically.
-
-On Apple Silicon Macs, the system toolchain image runs natively with no
-Rosetta 2 emulation overhead. The Alire-managed image runs on Apple Silicon
-via Rosetta 2.
-
-#### Verified test matrix
-
-| Image | Ubuntu VM (amd64) | macOS Intel (amd64) | MacBook Pro (arm64) |
-|-------|:---:|:---:|:---:|
-| `dev-container-ada` | Passed | Passed | N/A (amd64 only) |
-| `dev-container-ada-system` | Passed | Passed | Passed |
+In summary: the system toolchain image (`Dockerfile.system`) supports both
+`linux/amd64` and `linux/arm64`. The Alire-managed image (`Dockerfile`) is
+amd64-only. Apple Silicon users should use `Dockerfile.system` for native
+arm64 performance.
 
 ### 0.3 What stays the same
 
