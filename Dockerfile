@@ -127,6 +127,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Base packages (alphabetized)
 # ----------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    binutils \
     bzip2 \
     ca-certificates \
     curl \
