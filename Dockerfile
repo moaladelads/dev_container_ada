@@ -181,6 +181,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 # ----------------------------------------------------------------------------
+# glibc iconv stub
+# ----------------------------------------------------------------------------
+# On glibc systems, iconv is built into libc — there is no separate libiconv
+# package. Some Ada libraries (GNATCOLL iconv) link with -liconv explicitly.
+# An empty static archive satisfies the linker without pulling in a redundant
+# GNU libiconv.
+# ----------------------------------------------------------------------------
+RUN ar rcs /usr/lib/x86_64-linux-gnu/libiconv.a
+
+# ----------------------------------------------------------------------------
 # Create developer user
 # ----------------------------------------------------------------------------
 RUN set -eux; \
