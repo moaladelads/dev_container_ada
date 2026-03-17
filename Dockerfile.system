@@ -237,6 +237,7 @@ COPY --chown=${USER_UID}:${USER_GID} .zshrc ${HOME}/.zshrc
 # Configure Alire to use system-installed GNAT (gnat_external)
 # ----------------------------------------------------------------------------
 RUN alr --non-interactive toolchain --select gnat_external \
+ && alr config --global --set toolchain.assistant false \
  && echo "" \
  && echo "System toolchain:" \
  && gnat --version \
@@ -246,7 +247,9 @@ RUN alr --non-interactive toolchain --select gnat_external \
  && alr --version \
  && echo "" \
  && echo "Alire toolchain configuration:" \
- && alr toolchain
+ && alr toolchain \
+ && echo "" \
+ && echo "Toolchain assistant disabled (system toolchain only)."
 
 # ----------------------------------------------------------------------------
 # Install entrypoint and set runtime defaults
